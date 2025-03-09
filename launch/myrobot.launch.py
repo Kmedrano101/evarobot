@@ -11,7 +11,7 @@ def generate_launch_description():
     package_dir = get_package_share_directory('myrobot')
     # Define the URDF file paths
     urdf_file = os.path.join(package_dir, 'urdf', 'my_robot.urdf')
-    gz_world_file = os.path.join(package_dir, 'urdf', 'robot_wheeled.sdf')
+    gz_world_file = os.path.join(package_dir, 'urdf', 'my_robot.sdf')
     
     # Launch Gazebo Garden using `gz sim`
     gz_sim = ExecuteProcess(
