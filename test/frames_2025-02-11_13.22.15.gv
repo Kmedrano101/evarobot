@@ -1,0 +1,10 @@
+digraph G {
+"world" -> "x500_depth_0"[label=" Broadcaster: default_authority\nAverage rate: 100.242\nBuffer length: 4.968\nMost recent transform: 209.588\nOldest transform: 204.62\n"];
+"x500_depth_0" -> "OakD-Lite/base_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"OakD-Lite/base_link" -> "IMX214"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"OakD-Lite/base_link" -> "StereoOV7251"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1739276535.4070969"[ shape=plaintext ] ;
+}->"world";
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>myrobot</name>
+  <version>0.0.1</version>
+  <description>myrobot package for testing ROS2 and Gazebosim</description>
+  <maintainer email="kevin.ejem18@gmagil.com">Kevin Medrano Ayala</maintainer>
+  <license>BSD 3-Clause License</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>eigen3_cmake_module</depend>
+  <depend>libeigen3-dev</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>rviz2</depend>
+  <depend>tf2_sensor_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>geometry2</depend>
+  <depend>pcl_ros</depend>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>tf2_ros_py</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  
+  <exec_depend>ros2launch</exec_depend>
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
