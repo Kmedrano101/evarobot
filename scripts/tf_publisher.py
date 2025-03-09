@@ -11,7 +11,7 @@ from tf2_msgs.msg import TFMessage
 class TfPublisher(Node):
     def __init__(self):
         super().__init__('tf_publisher')
-        self.get_logger().info('TF Publisher started')
+        self.get_logger().info('TF Publisher Node Started')
         # Broadcaster para TF dinámicos y estáticos
         self.tf_broadcaster = TransformBroadcaster(self)
 

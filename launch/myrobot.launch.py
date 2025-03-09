@@ -19,7 +19,6 @@ def generate_launch_description():
         prefix='gnome-terminal --',
     )
 
-
     return LaunchDescription([
 
         DeclareLaunchArgument('world', default_value=gz_world_file, description='Gazebo world file'),

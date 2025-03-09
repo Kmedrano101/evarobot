@@ -7,7 +7,6 @@ import sys
 import threading
 import geometry_msgs.msg
 import rclpy
-import std_msgs.msg
 from sensor_msgs.msg import Joy
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 from rclpy.node import Node
@@ -83,7 +82,7 @@ def create_twist_message(x, y, z, th, speed, turn, x_val, y_val, z_val, yaw_val,
 class JoyControlNode(Node):
     def __init__(self):
         super().__init__('joy_control_node')
-
+        self.get_logger().info('Joystick Node Started')
         self.qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,

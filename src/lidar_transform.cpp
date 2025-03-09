@@ -17,12 +17,14 @@ class PointCloudTransformer : public rclcpp::Node
 {
 public:
     PointCloudTransformer()
-    : Node("lidar_transformer"),
+    : Node("lidar_transform"),
+      log_published_(false),
+      log_transform_failed_(false),
       timer_(nullptr)
     {
+        RCLCPP_INFO(this->get_logger(), "Lidar Transform Node Started");
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
         tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-        
         rclcpp::QoS qos_profile = rclcpp::QoS(rclcpp::KeepLast(10))
                 .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
                 .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
@@ -43,6 +45,8 @@ private:
 
     std::mutex callback_mutex_;
     sensor_msgs::msg::PointCloud2::SharedPtr latest_msg_;
+    bool log_published_;
+    bool log_transform_failed_;
 
     // Callback function for handling point clouds from camera 1
     void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
@@ -57,7 +61,11 @@ private:
         std::lock_guard<std::mutex> lock(callback_mutex_);
         if (latest_msg_)
         {
-            RCLCPP_INFO(this->get_logger(), "Publishing transformed point cloud at 100 Hz");
+            if (!log_published_)
+            {
+                RCLCPP_INFO(this->get_logger(), "Publishing transformed point cloud at 100 Hz");
+                log_published_ = true;
+            }
             std::string target_frame = "world";
             std::string current_frame = "lidar";
 
@@ -97,10 +105,15 @@ private:
 
                 // Publish the filtered point cloud
                 point_cloud_pub_1_->publish(output_msg);
+                log_transform_failed_ = false; // Reset the flag if transform succeeds
             }
             catch (tf2::TransformException & ex)
             {
-                RCLCPP_WARN(this->get_logger(), "Could not transform point cloud: %s", ex.what());
+                if (!log_transform_failed_)
+                {
+                    RCLCPP_WARN(this->get_logger(), "Could not transform point cloud: %s", ex.what());
+                    log_transform_failed_ = true;
+                }
             }
         }
     }
