@@ -738,6 +738,97 @@ Enable detailed PID debugging in `evarobot_config.h`:
 
 ---
 
+## 📊 PID Test Results
+
+### Motor Characterization Summary
+
+Comprehensive testing was conducted to characterize motor behavior and validate PID control performance.
+
+#### 🔑 Key Findings
+
+**Motor Dependency:**
+- ⚠️ **Critical:** Motors must run together - they do not work independently
+- Single motor operation is not supported by the current hardware configuration
+- Both motors must receive power for proper operation
+
+**Motor Balance:**
+- Left/Right motor velocity ratio: **0.97** (well-matched)
+- Motors exhibit nearly identical performance characteristics
+- Minimal compensation needed for straight-line motion
+
+**Controllable Velocity Range:**
+- Minimum: **63 rad/s** at 39% PWM (lowest controllable speed)
+- Maximum: **103 rad/s** at 95% PWM (hardware limit)
+- Effective range: **63-103 rad/s** (40 rad/s span)
+
+#### 📈 PWM to Velocity Mapping
+
+Measured velocity characteristics for both motors running simultaneously:
+
+| PWM Duty Cycle | Left Motor (rad/s) | Right Motor (rad/s) | Notes |
+|----------------|-------------------|-------------------|--------|
+| **39%** | 60-63 | 60-63 | Minimum controllable speed |
+| **50%** | 72-75 | 72-75 | Low speed operation |
+| **70%** | 95-99 | 95-99 | Medium speed (optimal for navigation) |
+| **85%** | 100-104 | 100-104 | High speed |
+| **95%** | 103-109 | 103-109 | Maximum speed (hardware limit) |
+
+**Velocity Constraints Added to Configuration:**
+```cpp
+// evarobot_config.h
+#define MOTOR_MIN_VELOCITY 63.0f    // rad/s - Minimum controllable
+#define MOTOR_MAX_VELOCITY 103.0f   // rad/s - Maximum at 95% PWM
+```
+
+#### ✅ PID Implementation Improvements
+
+Based on testing results, the following enhancements were implemented:
+
+1. **Direction Handling:**
+   - PID now properly handles positive/negative velocity setpoints
+   - Motor direction set based on setpoint sign
+   - PID works with absolute velocity values
+
+2. **Zero-Velocity Detection:**
+   - Clean motor stops when setpoints are zero
+   - Prevents PID windup at zero velocity
+   - Immediate response to stop commands
+
+3. **Debug Separation:**
+   - PID debug macros independent of general debug
+   - Allows targeted debugging without verbose output
+   - Levels: 0=Off, 1=Basic, 2=Verbose
+
+#### 🎯 Recommended Operating Points
+
+Based on test results:
+
+| Use Case | Velocity (rad/s) | PWM (%) | Characteristics |
+|----------|-----------------|---------|-----------------|
+| **Slow Navigation** | 63-75 | 39-50 | Precise positioning, tight spaces |
+| **Normal Operation** | 75-99 | 50-70 | Optimal for SLAM and navigation |
+| **Fast Transit** | 99-103 | 70-95 | Quick movement between waypoints |
+
+#### 📝 Test Configuration
+
+**Hardware:**
+- Arduino Nano RP2040 Connect
+- Dual DC motors with quadrature encoders (385 ticks/rev)
+- H-bridge motor driver
+- PWM frequency: 500 Hz
+
+**PID Parameters (Tuned):**
+- Left Motor: Kp=11.5, Ki=7.5, Kd=0.1
+- Right Motor: Kp=12.8, Ki=8.3, Kd=0.1
+- Sample rate: 100ms
+
+**Measurement Method:**
+- Encoder-based velocity calculation
+- Multiple test runs for each PWM level
+- Both motors running simultaneously (required)
+
+---
+
 ## 🔍 Troubleshooting
 
 ### 🚫 Motors not moving
