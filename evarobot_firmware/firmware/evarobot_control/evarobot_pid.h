@@ -165,22 +165,22 @@ void setupPID()
   // Initialize timing
   g_lastVelocityUpdate = millis();
 
-  DEBUG_PRINTLN(F("PID controllers initialized"));
+  PID_DEBUG_PRINTLN(F("PID controllers initialized"));
 
   #if PID_DEBUG_ENABLED
-    DEBUG_PRINT(F("Left PID - Kp: "));
-    DEBUG_PRINT(PID_KP_LEFT);
-    DEBUG_PRINT(F(", Ki: "));
-    DEBUG_PRINT(PID_KI_LEFT);
-    DEBUG_PRINT(F(", Kd: "));
-    DEBUG_PRINTLN(PID_KD_LEFT);
+    PID_DEBUG_PRINT(F("Left PID - Kp: "));
+    PID_DEBUG_PRINT(PID_KP_LEFT);
+    PID_DEBUG_PRINT(F(", Ki: "));
+    PID_DEBUG_PRINT(PID_KI_LEFT);
+    PID_DEBUG_PRINT(F(", Kd: "));
+    PID_DEBUG_PRINTLN(PID_KD_LEFT);
 
-    DEBUG_PRINT(F("Right PID - Kp: "));
-    DEBUG_PRINT(PID_KP_RIGHT);
-    DEBUG_PRINT(F(", Ki: "));
-    DEBUG_PRINT(PID_KI_RIGHT);
-    DEBUG_PRINT(F(", Kd: "));
-    DEBUG_PRINTLN(PID_KD_RIGHT);
+    PID_DEBUG_PRINT(F("Right PID - Kp: "));
+    PID_DEBUG_PRINT(PID_KP_RIGHT);
+    PID_DEBUG_PRINT(F(", Ki: "));
+    PID_DEBUG_PRINT(PID_KI_RIGHT);
+    PID_DEBUG_PRINT(F(", Kd: "));
+    PID_DEBUG_PRINTLN(PID_KD_RIGHT);
   #endif
 }
 
@@ -216,13 +216,13 @@ void updateVelocityMeasurements()
   g_lastVelocityUpdate = currentTime;
 
   #if PID_DEBUG_ENABLED >= 2
-    DEBUG_PRINT(F("Vel L: "));
-    DEBUG_PRINT(g_leftMotorInput, 3);
-    DEBUG_PRINT(F(" R: "));
-    DEBUG_PRINT(g_rightMotorInput, 3);
-    DEBUG_PRINT(F(" rad/s (dt: "));
-    DEBUG_PRINT(deltaTime);
-    DEBUG_PRINTLN(F(" ms)"));
+    PID_DEBUG_PRINT(F("Vel L: "));
+    PID_DEBUG_PRINT(g_leftMotorInput, 3);
+    PID_DEBUG_PRINT(F(" R: "));
+    PID_DEBUG_PRINT(g_rightMotorInput, 3);
+    PID_DEBUG_PRINT(F(" rad/s (dt: "));
+    PID_DEBUG_PRINT(deltaTime);
+    PID_DEBUG_PRINTLN(F(" ms)"));
   #endif
 }
 
@@ -241,15 +241,15 @@ bool computePID()
 
   #if PID_DEBUG_ENABLED >= 2
     if (leftComputed || rightComputed) {
-      DEBUG_PRINT(F("PID Out - L: "));
-      DEBUG_PRINT(g_leftMotorOutput, 1);
-      DEBUG_PRINT(F(" R: "));
-      DEBUG_PRINT(g_rightMotorOutput, 1);
-      DEBUG_PRINT(F(" (SP L: "));
-      DEBUG_PRINT(g_leftMotorSetpoint, 2);
-      DEBUG_PRINT(F(" R: "));
-      DEBUG_PRINT(g_rightMotorSetpoint, 2);
-      DEBUG_PRINTLN(F(")"));
+      PID_DEBUG_PRINT(F("PID Out - L: "));
+      PID_DEBUG_PRINT(g_leftMotorOutput, 1);
+      PID_DEBUG_PRINT(F(" R: "));
+      PID_DEBUG_PRINT(g_rightMotorOutput, 1);
+      PID_DEBUG_PRINT(F(" (SP L: "));
+      PID_DEBUG_PRINT(g_leftMotorSetpoint, 2);
+      PID_DEBUG_PRINT(F(" R: "));
+      PID_DEBUG_PRINT(g_rightMotorSetpoint, 2);
+      PID_DEBUG_PRINTLN(F(")"));
     }
   #endif
 
@@ -262,11 +262,11 @@ void setPIDSetpoints(double leftVelocity, double rightVelocity)
   g_rightMotorSetpoint = rightVelocity;
 
   #if PID_DEBUG_ENABLED
-    DEBUG_PRINT(F("PID Setpoints - L: "));
-    DEBUG_PRINT(leftVelocity, 3);
-    DEBUG_PRINT(F(" R: "));
-    DEBUG_PRINT(rightVelocity, 3);
-    DEBUG_PRINTLN(F(" rad/s"));
+    PID_DEBUG_PRINT(F("PID Setpoints - L: "));
+    PID_DEBUG_PRINT(leftVelocity, 3);
+    PID_DEBUG_PRINT(F(" R: "));
+    PID_DEBUG_PRINT(rightVelocity, 3);
+    PID_DEBUG_PRINTLN(F(" rad/s"));
   #endif
 }
 
@@ -288,7 +288,7 @@ void setControlMode(ControlMode mode)
     g_lastLeftPosition = g_positionLeft;
     g_lastRightPosition = g_positionRight;
 
-    DEBUG_PRINTLN(F("Control mode: AUTOMATIC (PID)"));
+    PID_DEBUG_PRINTLN(F("Control mode: AUTOMATIC (PID)"));
   } else {
     // Switch to manual mode
     g_pidLeft->SetMode(MANUAL);
@@ -298,7 +298,7 @@ void setControlMode(ControlMode mode)
     g_leftMotorSetpoint = 0.0;
     g_rightMotorSetpoint = 0.0;
 
-    DEBUG_PRINTLN(F("Control mode: MANUAL (Direct PWM)"));
+    PID_DEBUG_PRINTLN(F("Control mode: MANUAL (Direct PWM)"));
   }
 }
 
@@ -313,23 +313,23 @@ void updatePIDTuning(uint8_t motor, double kp, double ki, double kd)
     g_pidLeft->SetTunings(kp, ki, kd);
 
     #if PID_DEBUG_ENABLED
-      DEBUG_PRINT(F("Left PID tuning updated - Kp: "));
-      DEBUG_PRINT(kp);
-      DEBUG_PRINT(F(", Ki: "));
-      DEBUG_PRINT(ki);
-      DEBUG_PRINT(F(", Kd: "));
-      DEBUG_PRINTLN(kd);
+      PID_DEBUG_PRINT(F("Left PID tuning updated - Kp: "));
+      PID_DEBUG_PRINT(kp);
+      PID_DEBUG_PRINT(F(", Ki: "));
+      PID_DEBUG_PRINT(ki);
+      PID_DEBUG_PRINT(F(", Kd: "));
+      PID_DEBUG_PRINTLN(kd);
     #endif
   } else if (motor == MOTOR_RIGHT) {
     g_pidRight->SetTunings(kp, ki, kd);
 
     #if PID_DEBUG_ENABLED
-      DEBUG_PRINT(F("Right PID tuning updated - Kp: "));
-      DEBUG_PRINT(kp);
-      DEBUG_PRINT(F(", Ki: "));
-      DEBUG_PRINT(ki);
-      DEBUG_PRINT(F(", Kd: "));
-      DEBUG_PRINTLN(kd);
+      PID_DEBUG_PRINT(F("Right PID tuning updated - Kp: "));
+      PID_DEBUG_PRINT(kp);
+      PID_DEBUG_PRINT(F(", Ki: "));
+      PID_DEBUG_PRINT(ki);
+      PID_DEBUG_PRINT(F(", Kd: "));
+      PID_DEBUG_PRINTLN(kd);
     #endif
   }
 }
@@ -359,7 +359,7 @@ void resetPID()
   g_lastLeftPosition = g_positionLeft;
   g_lastRightPosition = g_positionRight;
 
-  DEBUG_PRINTLN(F("PID reset"));
+  PID_DEBUG_PRINTLN(F("PID reset"));
 }
 
 #endif // EVAROBOT_PID_H

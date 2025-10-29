@@ -44,9 +44,24 @@
 #define PWM_PIN_LEFT 17
 #define PWM_PIN_RIGHT 18
 #define PWM_FREQUENCY 500.0f  // Hz
-#define PWM_MIN_DUTY_CYCLE 38.0f
-#define PWM_MAX_DUTY_CYCLE 95.0f
+#define PWM_MIN_DUTY_CYCLE 38.0f   // Hardware minimum (motor barely moves)
+#define PWM_MAX_DUTY_CYCLE 95.0f   // Hardware maximum
 #define PWM_DEFAULT_DUTY_CYCLE 75.0f
+
+// ============================================================================
+// MOTOR VELOCITY CHARACTERISTICS (measured with both motors running)
+// ============================================================================
+// IMPORTANT: Motors must run together - they don't work independently
+// Motor balance: Left/Right ratio = 0.97 (well-matched)
+//
+// PWM to Velocity Mapping:
+//   39% PWM →  60-63 rad/s (minimum controllable speed)
+//   70% PWM →  95-99 rad/s (medium speed)
+//   95% PWM → 103-109 rad/s (maximum speed)
+//
+// Common achievable velocity range for both motors:
+#define MOTOR_MIN_VELOCITY 63.0f    // rad/s - Minimum controllable velocity
+#define MOTOR_MAX_VELOCITY 103.0f   // rad/s - Maximum velocity at 95% PWM
 
 // ============================================================================
 // ENCODER PINS
@@ -106,15 +121,25 @@
 // DEBUG OPTIONS
 // ============================================================================
 #define DEBUG_ENABLED 0       // Set to 1 to enable debug output
-#define PID_DEBUG_ENABLED 0   // Set to 1 for PID debug, 2 for verbose PID debug
+#define PID_DEBUG_ENABLED 2   // Set to 1 for PID debug, 2 for verbose PID debug
 #define PWM_LOG_LEVEL 1       // 0=None, 1=Error, 2=Warn, 3=Info, 4=Debug, 5=Verbose
 
+// General debug macros
 #if DEBUG_ENABLED
-  #define DEBUG_PRINT(x) Serial.print(x)
-  #define DEBUG_PRINTLN(x) Serial.println(x)
+  #define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
+  #define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
 #else
-  #define DEBUG_PRINT(x)
-  #define DEBUG_PRINTLN(x)
+  #define DEBUG_PRINT(...)
+  #define DEBUG_PRINTLN(...)
+#endif
+
+// PID-specific debug macros (independent of DEBUG_ENABLED)
+#if PID_DEBUG_ENABLED
+  #define PID_DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
+  #define PID_DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
+#else
+  #define PID_DEBUG_PRINT(...)
+  #define PID_DEBUG_PRINTLN(...)
 #endif
 
 #endif // EVAROBOT_CONFIG_H

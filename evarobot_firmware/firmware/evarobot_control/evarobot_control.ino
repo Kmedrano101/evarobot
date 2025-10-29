@@ -60,9 +60,20 @@ void loop()
     updateVelocityMeasurements();
 
     if (computePID()) {
-      // Apply PID outputs to motors
-      setMotorVelocity(MOTOR_LEFT, g_leftMotorOutput);
-      setMotorVelocity(MOTOR_RIGHT, g_rightMotorOutput);
+      // Check if setpoints are zero - stop motors completely
+      if (abs(g_leftMotorSetpoint) < 0.01 && abs(g_rightMotorSetpoint) < 0.01) {
+        stopMotors();
+        setMotorVelocity(MOTOR_LEFT, 0.0);
+        setMotorVelocity(MOTOR_RIGHT, 0.0);
+      } else {
+        // Set motor directions based on setpoint signs
+        setMotorDirection(MOTOR_LEFT, g_leftMotorSetpoint >= 0 ? MOTOR_FORWARD : MOTOR_BACKWARD);
+        setMotorDirection(MOTOR_RIGHT, g_rightMotorSetpoint >= 0 ? MOTOR_FORWARD : MOTOR_BACKWARD);
+
+        // Apply PID outputs to motors (absolute values)
+        setMotorVelocity(MOTOR_LEFT, abs(g_leftMotorOutput));
+        setMotorVelocity(MOTOR_RIGHT, abs(g_rightMotorOutput));
+      }
     }
   } else {
     // Manual mode: Direct PWM control
