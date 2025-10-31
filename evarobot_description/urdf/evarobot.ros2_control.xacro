@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!--
+  EvaRobot ROS2 Control Configuration
+
+  Defines the hardware interface for ROS2 Control.
+  For Gazebo simulation, uses gazebo_ros2_control plugin.
+  For real hardware, this would be replaced with custom hardware interface.
+
+  Author: Kevin Medrano Ayala
+  License: BSD-3-Clause
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ===================================================================== -->
+  <!-- ROS2 CONTROL -->
+  <!-- ===================================================================== -->
+
+  <ros2_control name="evarobot_system" type="system">
+
+    <!-- Hardware plugin -->
+    <!-- For Gazebo simulation, use gazebo_ros2_control/GazeboSystem -->
+    <!-- For real hardware, replace with your custom hardware interface -->
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+
+    <!-- Left wheel joint -->
+    <joint name="left_wheel_joint">
+      <command_interface name="velocity">
+        <param name="min">-10.0</param>
+        <param name="max">10.0</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- Right wheel joint -->
+    <joint name="right_wheel_joint">
+      <command_interface name="velocity">
+        <param name="min">-10.0</param>
+        <param name="max">10.0</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+  </ros2_control>
+
+  <!-- ===================================================================== -->
+  <!-- GAZEBO ROS2 CONTROL PLUGIN -->
+  <!-- ===================================================================== -->
+
+  <gazebo>
+    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+      <!-- ROS2 Control configuration file -->
+      <parameters>$(find evarobot_controller)/config/evarobot_controllers.yaml</parameters>
+      <!-- ROS update rate (Hz) -->
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+    </plugin>
+  </gazebo>
+
+</robot>

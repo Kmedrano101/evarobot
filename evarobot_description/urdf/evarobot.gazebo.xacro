@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<!--
+  EvaRobot Gazebo Configuration
+
+  Gazebo-specific elements including:
+  - Material colors
+  - Physical properties (friction, damping)
+  - Sensor plugins (if needed)
+
+  Author: Kevin Medrano Ayala
+  License: BSD-3-Clause
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ===================================================================== -->
+  <!-- GAZEBO COLORS -->
+  <!-- ===================================================================== -->
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+  </gazebo>
+
+  <gazebo reference="left_wheel_link">
+    <material>Gazebo/DarkGrey</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+
+  <gazebo reference="right_wheel_link">
+    <material>Gazebo/DarkGrey</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+
+  <gazebo reference="caster_wheel_link">
+    <material>Gazebo/Grey</material>
+    <mu1>0.1</mu1>
+    <mu2>0.1</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+
+  <!-- ===================================================================== -->
+  <!-- ADDITIONAL SENSORS (OPTIONAL) -->
+  <!-- ===================================================================== -->
+
+  <!-- Example: IMU sensor (commented out, add if needed) -->
+  <!--
+  <gazebo reference="base_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <ros>
+          <namespace>/</namespace>
+          <remapping>~/out:=imu</remapping>
+        </ros>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+      </plugin>
+    </sensor>
+  </gazebo>
+  -->
+
+  <!-- Example: Lidar sensor (commented out, add if needed) -->
+  <!--
+  <gazebo reference="base_link">
+    <sensor name="lidar" type="ray">
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1.0</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.12</min>
+          <max>10.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="scan" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <namespace>/</namespace>
+          <remapping>~/out:=scan</remapping>
+        </ros>
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>lidar_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+  -->
+
+</robot>

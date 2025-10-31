@@ -1,0 +1,198 @@
+<?xml version="1.0"?>
+<!--
+  EvaRobot Main URDF Description
+
+  A simple differential drive robot with:
+  - Rectangular base
+  - Two driven wheels (left/right)
+  - One front caster wheel
+  - ROS2 Control integration
+  - Gazebo simulation support
+
+  Author: Kevin Medrano Ayala
+  License: BSD-3-Clause
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="evarobot">
+
+  <!-- ===================================================================== -->
+  <!-- PROPERTIES -->
+  <!-- ===================================================================== -->
+
+  <!-- Robot dimensions (meters) -->
+  <xacro:property name="base_length" value="0.30" />
+  <xacro:property name="base_width" value="0.20" />
+  <xacro:property name="base_height" value="0.08" />
+  <xacro:property name="base_mass" value="2.0" />
+
+  <!-- Wheel dimensions (measured from evarobot_controllers.yaml) -->
+  <xacro:property name="wheel_radius" value="0.042" />
+  <xacro:property name="wheel_width" value="0.03" />
+  <xacro:property name="wheel_mass" value="0.1" />
+  <xacro:property name="wheel_separation" value="0.194" />
+
+  <!-- Caster wheel dimensions -->
+  <xacro:property name="caster_radius" value="0.015" />
+  <xacro:property name="caster_mass" value="0.05" />
+  <xacro:property name="caster_offset_x" value="0.12" />
+
+  <!-- Colors -->
+  <material name="blue">
+    <color rgba="0.2 0.3 0.8 1.0"/>
+  </material>
+
+  <material name="dark_grey">
+    <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+
+  <material name="light_grey">
+    <color rgba="0.6 0.6 0.6 1.0"/>
+  </material>
+
+  <!-- ===================================================================== -->
+  <!-- MACROS -->
+  <!-- ===================================================================== -->
+
+  <!-- Inertia macros for standard shapes -->
+  <xacro:macro name="box_inertia" params="mass x y z">
+    <inertia ixx="${mass * (y*y + z*z) / 12.0}" ixy="0.0" ixz="0.0"
+             iyy="${mass * (x*x + z*z) / 12.0}" iyz="0.0"
+             izz="${mass * (x*x + y*y) / 12.0}"/>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertia" params="mass r h">
+    <inertia ixx="${mass * (3*r*r + h*h) / 12.0}" ixy="0.0" ixz="0.0"
+             iyy="${mass * (3*r*r + h*h) / 12.0}" iyz="0.0"
+             izz="${mass * r*r / 2.0}"/>
+  </xacro:macro>
+
+  <xacro:macro name="sphere_inertia" params="mass r">
+    <inertia ixx="${2.0 * mass * r * r / 5.0}" ixy="0.0" ixz="0.0"
+             iyy="${2.0 * mass * r * r / 5.0}" iyz="0.0"
+             izz="${2.0 * mass * r * r / 5.0}"/>
+  </xacro:macro>
+
+  <!-- ===================================================================== -->
+  <!-- BASE LINK -->
+  <!-- ===================================================================== -->
+
+  <!-- Base footprint (ground projection) -->
+  <link name="base_footprint"/>
+
+  <!-- Base link (chassis) -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${base_mass}"/>
+      <xacro:box_inertia mass="${base_mass}" x="${base_length}" y="${base_width}" z="${base_height}"/>
+    </inertial>
+  </link>
+
+  <!-- Joint connecting base_footprint to base_link -->
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!-- WHEELS -->
+  <!-- ===================================================================== -->
+
+  <!-- Wheel macro -->
+  <xacro:macro name="wheel" params="prefix reflect">
+
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <material name="dark_grey"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <mass value="${wheel_mass}"/>
+        <xacro:cylinder_inertia mass="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <origin xyz="0 ${reflect * wheel_separation / 2.0} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+  </xacro:macro>
+
+  <!-- Instantiate left and right wheels -->
+  <xacro:wheel prefix="left" reflect="1"/>
+  <xacro:wheel prefix="right" reflect="-1"/>
+
+  <!-- ===================================================================== -->
+  <!-- CASTER WHEEL -->
+  <!-- ===================================================================== -->
+
+  <link name="caster_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_radius}"/>
+      </geometry>
+      <material name="light_grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_radius}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${caster_mass}"/>
+      <xacro:sphere_inertia mass="${caster_mass}" r="${caster_radius}"/>
+    </inertial>
+  </link>
+
+  <joint name="caster_wheel_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_wheel_link"/>
+    <origin xyz="${caster_offset_x} 0 ${-wheel_radius + caster_radius}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!-- INCLUDES -->
+  <!-- ===================================================================== -->
+
+  <!-- Include Gazebo-specific elements -->
+  <xacro:include filename="$(find evarobot_description)/urdf/evarobot.gazebo.xacro"/>
+
+  <!-- Include ROS2 Control configuration -->
+  <xacro:include filename="$(find evarobot_description)/urdf/evarobot.ros2_control.xacro"/>
+
+</robot>
