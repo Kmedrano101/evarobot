@@ -1,0 +1,175 @@
+# ROS2 Control Configuration for EvaRobot
+# This file configures the differential drive controller and joint state broadcaster
+
+# ============================================================================
+# CONTROLLER MANAGER
+# ============================================================================
+controller_manager:
+  ros__parameters:
+    # Update frequency for all controllers (Hz)
+    update_rate: 50  # 50 Hz provides smooth control
+
+    # Define available controllers
+    evarobot_base_controller:
+      type: diff_drive_controller/DiffDriveController
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+
+# ============================================================================
+# DIFFERENTIAL DRIVE CONTROLLER
+# ============================================================================
+# Controls the robot's base movement using differential drive kinematics
+# Subscribes to: /cmd_vel (or /evarobot_base_controller/cmd_vel)
+# Publishes to: /odom, /tf (odom->base_footprint)
+#
+evarobot_base_controller:
+  ros__parameters:
+    # Controller type
+    type: diff_drive_controller/DiffDriveController
+
+    # Use stamped velocity commands (TwistStamped vs Twist)
+    use_stamped_vel: false
+
+    # ========================================================================
+    # WHEEL CONFIGURATION
+    # ========================================================================
+    # Joint names must match the names in your URDF robot description
+    # These are the actuated wheel joints
+    left_wheel_names: ['left_wheel_joint']
+    right_wheel_names: ['right_wheel_joint']
+
+    # ========================================================================
+    # ROBOT PHYSICAL PARAMETERS
+    # ========================================================================
+    # IMPORTANT: Measure these values from your actual robot!
+    #
+    # wheel_separation: Distance between the centers of the left and right wheels (meters)
+    #   - Measure the distance between the contact points of both wheels on the ground
+    #   - For EvaRobot, typical value is 0.18-0.25m
+    wheel_separation: 0.194
+
+    # wheel_radius: Radius of the wheels (meters)
+    #   - Measure the diameter and divide by 2
+    #   - Or measure circumference and calculate: radius = circumference / (2 * pi)
+    #   - For EvaRobot with 66mm diameter wheels: 0.033m
+    wheel_radius: 0.042
+
+    # Multipliers to compensate for physical imperfections
+    # Set to 1.0 initially, then tune if robot doesn't drive straight
+    wheel_separation_multiplier: 1.0
+    left_wheel_radius_multiplier: 1.0
+    right_wheel_radius_multiplier: 1.0
+
+    # ========================================================================
+    # ENCODER CONFIGURATION
+    # ========================================================================
+    # Based on EvaRobot firmware: 385 ticks per revolution
+    # These parameters are used if you're providing position feedback
+    # wheels_per_side: 1  # Number of wheels on each side
+
+    # ========================================================================
+    # PUBLISHING CONFIGURATION
+    # ========================================================================
+    # Rate at which odometry and TF are published (Hz)
+    publish_rate: 50.0
+
+    # Frame IDs for TF tree
+    # TF will be: odom -> base_footprint (if enable_odom_tf is true)
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+
+    # Covariance matrices for odometry (diagonal elements)
+    # [x, y, z, roll, pitch, yaw]
+    # Higher values = less confidence in odometry
+    pose_covariance_diagonal: [0.001, 0.001, 1.0e-3, 1.0e-3, 1.0e-3, 0.01]
+    twist_covariance_diagonal: [0.001, 0.001, 1.0e-3, 1.0e-3, 1.0e-3, 0.01]
+
+    # Publishing options
+    open_loop: false                  # true = use commanded velocities for odom, false = use measured
+    enable_odom_tf: true              # Publish odom->base_footprint transform
+    publish_limited_velocity: true   # Publish velocity after applying limits
+    publish_wheel_data: true          # Publish wheel velocities and positions
+
+    # ========================================================================
+    # VELOCITY AND ACCELERATION LIMITS
+    # ========================================================================
+    # These limits protect the robot and ensure safe operation
+    # Adjust based on your robot's capabilities and safety requirements
+
+    # Velocity command timeout (seconds)
+    # Robot will stop if no command received within this time
+    cmd_vel_timeout: 0.5
+
+    # Linear velocity limits (forward/backward motion)
+    linear:
+      x:
+        has_velocity_limits: true
+        max_velocity: 0.5          # m/s - Maximum forward/backward speed
+        min_velocity: -0.5         # m/s - Maximum reverse speed
+        has_acceleration_limits: true
+        max_acceleration: 0.8      # m/s^2 - Maximum acceleration
+        min_acceleration: -0.8     # m/s^2 - Maximum deceleration
+        has_jerk_limits: false
+        max_jerk: 5.0              # m/s^3 - Rate of change of acceleration
+
+    # Angular velocity limits (rotation)
+    angular:
+      z:
+        has_velocity_limits: true
+        max_velocity: 2.0          # rad/s - Maximum rotation speed (~115 deg/s)
+        min_velocity: -2.0         # rad/s
+        has_acceleration_limits: true
+        max_acceleration: 3.0      # rad/s^2
+        min_acceleration: -3.0     # rad/s^2
+        has_jerk_limits: false
+        max_jerk: 5.0              # rad/s^3
+
+
+# ============================================================================
+# JOINT STATE BROADCASTER
+# ============================================================================
+# Publishes joint states to /joint_states topic
+# Required for robot_state_publisher to publish TF transforms
+#
+joint_state_broadcaster:
+  ros__parameters:
+    # Joints to publish (usually all joints in the URDF)
+    # If empty, publishes all available joints from hardware interface
+    joints: []
+
+    # Interfaces to publish for each joint
+    # Options: position, velocity, effort
+    # The hardware interface must provide these
+    interfaces:
+      - position
+      - velocity
+
+
+# ============================================================================
+# CALIBRATION GUIDE
+# ============================================================================
+#
+# 1. MEASURE PHYSICAL PARAMETERS:
+#    - wheel_radius: Measure wheel diameter and divide by 2
+#    - wheel_separation: Measure distance between wheel centers
+#
+# 2. TEST STRAIGHT LINE MOTION:
+#    ros2 topic pub /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.2}}"
+#    - If robot veers left: increase left_wheel_radius_multiplier slightly
+#    - If robot veers right: increase right_wheel_radius_multiplier slightly
+#
+# 3. TEST ROTATION:
+#    ros2 topic pub /cmd_vel geometry_msgs/msg/Twist "{angular: {z: 1.0}}"
+#    - Mark starting orientation
+#    - Command 360 degree rotation: z = 2*pi rad = 6.28 rad for duration
+#    - If robot rotates too much: increase wheel_separation_multiplier
+#    - If robot rotates too little: decrease wheel_separation_multiplier
+#
+# 4. TUNE VELOCITY LIMITS:
+#    - Start conservative and gradually increase
+#    - Test at maximum velocity to ensure stability
+#    - Ensure acceleration limits provide smooth motion
+#
+# ============================================================================

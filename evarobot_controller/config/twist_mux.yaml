@@ -1,0 +1,115 @@
+# Twist Mux Configuration for EvaRobot
+#
+# Twist Mux multiplexes multiple velocity command sources and selects
+# the active one based on priority and timeout. This allows different
+# control sources (joystick, keyboard, autonomous navigation) to coexist.
+#
+# Higher priority values take precedence when multiple sources are active.
+# If a source doesn't publish within its timeout, it becomes inactive.
+
+twist_mux:
+  ros__parameters:
+    # Use stamped or unstamped Twist messages
+    # false = geometry_msgs/msg/Twist
+    # true = geometry_msgs/msg/TwistStamped
+    use_stamped: false
+
+    # Topics to multiplex
+    # Each topic has:
+    #   - topic: The topic name to subscribe to
+    #   - timeout: Time (seconds) after which the source is considered inactive
+    #   - priority: Higher values = higher priority (0-100 typical range)
+    topics:
+      # Joystick control - Highest priority
+      # Used for manual teleoperation with a game controller
+      joystick:
+        topic: joy_vel
+        timeout: 0.5
+        priority: 100
+
+      # Keyboard control - High priority
+      # Used for manual control via keyboard (teleop_twist_keyboard)
+      keyboard:
+        topic: key_vel
+        timeout: 0.5
+        priority: 90
+
+      # Web interface control - Medium-high priority
+      # Used for remote web-based control
+      web:
+        topic: web_vel
+        timeout: 0.5
+        priority: 85
+
+      # Navigation - Medium priority
+      # Used for autonomous navigation (Nav2)
+      navigation:
+        topic: nav_vel
+        timeout: 0.5
+        priority: 80
+
+      # Safety/Emergency - Lower priority
+      # Used for safety override or emergency stop
+      safety:
+        topic: safety_vel
+        timeout: 1.0
+        priority: 50
+
+    # Locks configuration
+    # Locks can disable the mux output (e.g., for emergency stop)
+    locks:
+      # Emergency stop lock
+      # When active, blocks all velocity commands
+      emergency_stop:
+        topic: emergency_stop
+        timeout: 0.0  # No timeout - must be explicitly released
+        priority: 255 # Maximum priority
+
+# ============================================================================
+# TOPIC MAPPING
+# ============================================================================
+#
+# Input topics (subscribe):
+#   - /joy_vel           <- Joystick commands
+#   - /key_vel           <- Keyboard commands
+#   - /web_vel           <- Web interface commands
+#   - /nav_vel           <- Navigation commands
+#   - /safety_vel        <- Safety override commands
+#   - /emergency_stop    <- Emergency stop lock
+#
+# Output topic (publish):
+#   - /cmd_vel           -> Multiplexed output (to robot controller)
+#
+# ============================================================================
+# USAGE EXAMPLES
+# ============================================================================
+#
+# 1. Publish from joystick (highest priority):
+#    ros2 topic pub /joy_vel geometry_msgs/msg/Twist \
+#        "{linear: {x: 0.3}, angular: {z: 0.5}}"
+#
+# 2. Check active topic:
+#    ros2 topic echo /cmd_vel_mux/active
+#
+# 3. Monitor selected topic:
+#    ros2 topic echo /cmd_vel_mux/selected
+#
+# 4. Trigger emergency stop:
+#    ros2 topic pub /emergency_stop std_msgs/msg/Bool "{data: true}"
+#
+# 5. Release emergency stop:
+#    ros2 topic pub /emergency_stop std_msgs/msg/Bool "{data: false}"
+#
+# ============================================================================
+# PRIORITY GUIDE
+# ============================================================================
+#
+# Priority Level | Use Case              | Example
+# ---------------|-----------------------|------------------
+# 255            | Emergency stop/lock   | Safety system
+# 100-150        | Manual control        | Joystick, keyboard
+# 50-99          | Semi-autonomous       | Assisted driving
+# 10-49          | Autonomous            | Navigation, patrol
+# 0-9            | Background/Default    | Idle behavior
+#
+# ============================================================================
