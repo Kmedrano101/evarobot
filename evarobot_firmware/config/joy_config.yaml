@@ -1,0 +1,116 @@
+# Joystick configuration for evarobot
+# This file configures the joy node parameters for the joystick device
+
+joystick:
+  ros__parameters:
+    # Device ID: Index of the joystick device (0 for first joystick, 1 for second, etc.)
+    device_id: 0
+
+    # Device name: Specific device name (leave empty to use device_id)
+    device_name: ""
+
+    # Deadzone: Joystick axis values below this threshold are considered zero
+    # Range: 0.0 to 1.0 (0.5 means 50% deadzone to filter out drift)
+    deadzone: 0.05
+
+    # Autorepeat rate: Frequency (Hz) at which to republish the last message if no new input
+    # Set to 0.0 to disable autorepeat
+    autorepeat_rate: 20.0
+
+    # Sticky buttons: If true, buttons act as toggles (press once to enable, press again to disable)
+    # If false, buttons are only active while held down
+    sticky_buttons: false
+
+    # Coalesce interval: Time in milliseconds to combine multiple Joy messages
+    # Lower values = more responsive but higher CPU usage
+    coalesce_interval_ms: 1
+
+# Joy teleop configuration for mapping joystick axes to robot velocity commands
+joy_teleop:
+  ros__parameters:
+    move:
+      # Type of command to send
+      type: topic
+
+      # Message type for velocity commands
+      interface_type: geometry_msgs/msg/TwistStamped
+
+      # Topic to publish velocity commands to
+      topic_name: input_joy/cmd_vel
+
+      # Deadman buttons: Buttons that must be held for commands to be sent
+      # Button indices (common mappings):
+      # - PS4/Xbox: 5 = RB/R1 (right bumper)
+      # - PS4: 4 = LB/L1 (left bumper)
+      # Multiple buttons can be specified: [4, 5] means both must be pressed
+      deadman_buttons: [5]
+
+      # Axis mappings: Map joystick axes to robot velocities
+      axis_mappings:
+        # Linear velocity (forward/backward)
+        twist-linear-x:
+          # Axis 1 is typically the left stick vertical axis
+          axis: 1
+          # Scale factor: maximum linear velocity in m/s
+          scale: 0.5
+          # Offset to apply to the axis value
+          offset: 0.0
+
+        # Angular velocity (rotation left/right)
+        twist-angular-z:
+          # Axis 3 is typically the right stick horizontal axis
+          axis: 0
+          # Scale factor: maximum angular velocity in rad/s
+          scale: 1.5
+          # Offset to apply to the axis value
+          offset: 0.0
+
+# Common joystick button/axis mappings for reference:
+#
+# PlayStation 4 / DualShock 4:
+#   Axes:
+#     0 = Left stick horizontal    (left = -1.0, right = +1.0)
+#     1 = Left stick vertical      (up = +1.0, down = -1.0)
+#     2 = L2 trigger               (released = +1.0, pressed = -1.0)
+#     3 = Right stick horizontal   (left = -1.0, right = +1.0)
+#     4 = Right stick vertical     (up = +1.0, down = -1.0)
+#     5 = R2 trigger               (released = +1.0, pressed = -1.0)
+#     6 = D-pad horizontal         (left = +1.0, right = -1.0)
+#     7 = D-pad vertical           (up = +1.0, down = -1.0)
+#   Buttons:
+#     0 = X (Cross)
+#     1 = O (Circle)
+#     2 = Triangle
+#     3 = Square
+#     4 = L1
+#     5 = R1
+#     6 = L2 (digital)
+#     7 = R2 (digital)
+#     8 = Share
+#     9 = Options
+#     10 = PS button
+#     11 = L3 (left stick press)
+#     12 = R3 (right stick press)
+#
+# Xbox Controller:
+#   Axes:
+#     0 = Left stick horizontal    (left = -1.0, right = +1.0)
+#     1 = Left stick vertical      (up = +1.0, down = -1.0)
+#     2 = LT trigger               (released = +1.0, pressed = -1.0)
+#     3 = Right stick horizontal   (left = -1.0, right = +1.0)
+#     4 = Right stick vertical     (up = +1.0, down = -1.0)
+#     5 = RT trigger               (released = +1.0, pressed = -1.0)
+#     6 = D-pad horizontal         (left = +1.0, right = -1.0)
+#     7 = D-pad vertical           (up = +1.0, down = -1.0)
+#   Buttons:
+#     0 = A
+#     1 = B
+#     2 = X
+#     3 = Y
+#     4 = LB
+#     5 = RB
+#     6 = Back
+#     7 = Start
+#     8 = Xbox button
+#     9 = Left stick press
+#     10 = Right stick press
