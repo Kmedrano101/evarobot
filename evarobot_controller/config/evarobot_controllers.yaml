@@ -10,11 +10,14 @@ controller_manager:
     update_rate: 50  # 50 Hz provides smooth control
 
     # Define available controllers
-    evarobot_base_controller:
+    evarobot_controller:
       type: diff_drive_controller/DiffDriveController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
+    
+    simple_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
 
 
 # ============================================================================
@@ -24,13 +27,13 @@ controller_manager:
 # Subscribes to: /cmd_vel (or /evarobot_base_controller/cmd_vel)
 # Publishes to: /odom, /tf (odom->base_footprint)
 #
-evarobot_base_controller:
+evarobot_controller:
   ros__parameters:
     # Controller type
     type: diff_drive_controller/DiffDriveController
 
     # Use stamped velocity commands (TwistStamped vs Twist)
-    use_stamped_vel: false
+    use_stamped_vel: true
 
     # ========================================================================
     # WHEEL CONFIGURATION
