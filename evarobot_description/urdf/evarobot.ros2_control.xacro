@@ -18,10 +18,11 @@
   <ros2_control name="evarobot_system" type="system">
 
     <!-- Hardware plugin -->
-    <!-- For Gazebo simulation, use gazebo_ros2_control/GazeboSystem -->
+    <!-- For Gazebo Harmonic simulation, use gz_ros2_control/GazeboSimSystem -->
+    <!-- For Gazebo Classic, use: gazebo_ros2_control/GazeboSystem -->
     <!-- For real hardware, replace with your custom hardware interface -->
     <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
 
     <!-- Left wheel joint -->
@@ -51,14 +52,23 @@
   <!-- ===================================================================== -->
 
   <gazebo>
-    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+    <!-- For Gazebo Harmonic (ROS2 Jazzy) -->
+    <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <!-- ROS2 Control configuration file -->
       <parameters>$(find evarobot_controller)/config/evarobot_controllers.yaml</parameters>
-      <!-- ROS update rate (Hz) -->
+      <!-- ROS namespace -->
       <ros>
         <namespace>/</namespace>
       </ros>
     </plugin>
-  </gazebo>
+
+    <!-- For Gazebo Classic (ROS2 Humble and earlier), use this instead:
+    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+      <parameters>$(find evarobot_controller)/config/evarobot_controllers.yaml</parameters>
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+    </plugin>
+    -->
 
 </robot>
