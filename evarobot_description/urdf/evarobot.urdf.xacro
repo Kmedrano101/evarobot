@@ -20,8 +20,8 @@
 
   <!-- Robot dimensions (meters) -->
   <xacro:property name="base_length" value="0.30" />
-  <xacro:property name="base_width" value="0.20" />
-  <xacro:property name="base_height" value="0.08" />
+  <xacro:property name="base_width" value="0.16" />  <!-- Reduced from 0.20 so wheels stick out -->
+  <xacro:property name="base_height" value="0.056" />  <!-- Reduced by 30% from 0.08 to show wheels better -->
   <xacro:property name="base_mass" value="2.0" />
 
   <!-- Wheel dimensions (measured from evarobot_controllers.yaml) -->

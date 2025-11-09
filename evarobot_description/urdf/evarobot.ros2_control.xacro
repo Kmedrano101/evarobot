@@ -3,8 +3,8 @@
   EvaRobot ROS2 Control Configuration
 
   Defines the hardware interface for ROS2 Control.
-  For Gazebo simulation, uses gazebo_ros2_control plugin.
-  For real hardware, this would be replaced with custom hardware interface.
+  Configured for Gazebo Harmonic simulation using gz_ros2_control plugin.
+  For real hardware, replace the hardware plugin with your custom hardware interface.
 
   Author: Kevin Medrano Ayala
   License: BSD-3-Clause
@@ -17,9 +17,7 @@
 
   <ros2_control name="evarobot_system" type="system">
 
-    <!-- Hardware plugin -->
-    <!-- For Gazebo Harmonic simulation, use gz_ros2_control/GazeboSimSystem -->
-    <!-- For Gazebo Classic, use: gazebo_ros2_control/GazeboSystem -->
+    <!-- Hardware plugin for Gazebo Harmonic simulation -->
     <!-- For real hardware, replace with your custom hardware interface -->
     <hardware>
       <plugin>gz_ros2_control/GazeboSimSystem</plugin>
@@ -48,11 +46,11 @@
   </ros2_control>
 
   <!-- ===================================================================== -->
-  <!-- GAZEBO ROS2 CONTROL PLUGIN -->
+  <!-- GAZEBO HARMONIC ROS2 CONTROL PLUGIN -->
   <!-- ===================================================================== -->
 
   <gazebo>
-    <!-- For Gazebo Harmonic (ROS2 Jazzy) -->
+    <!-- Gazebo Harmonic ROS2 Control Plugin -->
     <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <!-- ROS2 Control configuration file -->
       <parameters>$(find evarobot_controller)/config/evarobot_controllers.yaml</parameters>
@@ -61,15 +59,6 @@
         <namespace>/</namespace>
       </ros>
     </plugin>
-
-    <!-- For Gazebo Classic (ROS2 Humble and earlier), use this instead:
-    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
-      <parameters>$(find evarobot_controller)/config/evarobot_controllers.yaml</parameters>
-      <ros>
-        <namespace>/</namespace>
-      </ros>
-    </plugin>
-    -->
   </gazebo>
 
 </robot>

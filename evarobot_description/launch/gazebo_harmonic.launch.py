@@ -34,7 +34,7 @@ def generate_launch_description():
     world_arg = DeclareLaunchArgument(
         'world',
         default_value='empty.sdf',
-        description='World file name (SDF format for Gazebo Harmonic)'
+        description='World file name (with .sdf extension). Options: empty.sdf, test_world.sdf'
     )
 
     use_sim_time_arg = DeclareLaunchArgument(

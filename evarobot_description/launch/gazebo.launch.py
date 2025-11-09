@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-EvaRobot Gazebo Simulation Launch File
+EvaRobot Gazebo Harmonic Simulation Launch File
 
-Launches the EvaRobot in Gazebo simulation with:
-  - Configurable world file
-  - Robot state publisher
-  - Gazebo simulation
-  - Robot spawner
-  - Optional RViz visualization
+Launches the EvaRobot in Gazebo Harmonic (gz sim) for ROS2 Jazzy.
+
+Uses:
+  - gz sim (Gazebo Harmonic) instead of gzserver/gzclient (Gazebo Classic)
+  - ros_gz_sim for simulation interface
+  - gz_ros2_control for robot control
 
 Author: Kevin Medrano Ayala
 License: BSD-3-Clause
@@ -15,11 +15,11 @@ License: BSD-3-Clause
 
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, ExecuteProcess, RegisterEventHandler
-from launch.conditions import IfCondition
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
+from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression, TextSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.parameter_descriptions import ParameterValue
@@ -33,8 +33,8 @@ def generate_launch_description():
 
     world_arg = DeclareLaunchArgument(
         'world',
-        default_value='empty',
-        description='World file name (without .world extension). Options: empty, test_world'
+        default_value='empty.sdf',
+        description='World file name (with .sdf extension). Options: empty.sdf, test_world.sdf'
     )
 
     use_sim_time_arg = DeclareLaunchArgument(
@@ -76,7 +76,7 @@ def generate_launch_description():
     gui_arg = DeclareLaunchArgument(
         'gui',
         default_value='true',
-        description='Start Gazebo GUI'
+        description='Start Gazebo GUI (set to false for headless mode)'
     )
 
     # ========================================================================
@@ -94,12 +94,13 @@ def generate_launch_description():
 
     # Package directories
     pkg_evarobot_description = get_package_share_directory('evarobot_description')
+    pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
     # World file path
     world_file = PathJoinSubstitution([
         FindPackageShare('evarobot_description'),
         'worlds',
-        PythonExpression(['"', world_name, '" + ".world"'])
+        world_name
     ])
 
     # URDF file path
@@ -122,7 +123,6 @@ def generate_launch_description():
     # ========================================================================
 
     # Robot State Publisher
-    # Publishes robot transforms based on URDF
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -134,35 +134,56 @@ def generate_launch_description():
         ]
     )
 
-    # Gazebo Server (physics simulation)
-    gazebo_server = ExecuteProcess(
-        cmd=['gzserver',
-             '-s', 'libgazebo_ros_init.so',
-             '-s', 'libgazebo_ros_factory.so',
-             world_file],
-        output='screen'
+    # Gazebo Harmonic (gz sim) Launch with GUI
+    gazebo_gui = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
+        ]),
+        launch_arguments={
+            'gz_args': [world_file, TextSubstitution(text=' -r')],
+            'on_exit_shutdown': 'true'
+        }.items(),
+        condition=IfCondition(gui)
     )
 
-    # Gazebo Client (GUI)
-    gazebo_client = ExecuteProcess(
-        cmd=['gzclient'],
-        output='screen',
-        condition=IfCondition(gui)
+    # Gazebo Harmonic (gz sim) Launch headless (no GUI)
+    gazebo_headless = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
+        ]),
+        launch_arguments={
+            'gz_args': [world_file, TextSubstitution(text=' -r -s')],
+            'on_exit_shutdown': 'true'
+        }.items(),
+        condition=UnlessCondition(gui)
     )
 
     # Spawn Robot in Gazebo
     spawn_robot = Node(
-        package='gazebo_ros',
-        executable='spawn_entity.py',
+        package='ros_gz_sim',
+        executable='create',
+        name='spawn_evarobot',
+        output='screen',
         arguments=[
+            '-name', 'evarobot',
             '-topic', 'robot_description',
-            '-entity', 'evarobot',
             '-x', x_pose,
             '-y', y_pose,
             '-z', z_pose,
-            '-Y', yaw
+            '-Y', yaw,
         ],
-        output='screen'
+    )
+
+    # ROS-Gazebo Bridge for clock
+    clock_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='clock_bridge',
+        output='screen',
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'
+        ],
+        parameters=[{'use_sim_time': use_sim_time}]
     )
 
     # RViz (optional)
@@ -176,21 +197,57 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         name='rviz2',
+        output='screen',
         arguments=['-d', rviz_config_file],
         parameters=[{'use_sim_time': use_sim_time}],
-        condition=IfCondition(start_rviz),
-        output='screen'
+        condition=IfCondition(start_rviz)
     )
 
     # ========================================================================
     # EVENT HANDLERS
     # ========================================================================
 
-    # Delay spawning robot until Gazebo is ready
-    delay_spawn_after_gazebo = RegisterEventHandler(
+    # Controller configuration file path
+    controller_config_file = PathJoinSubstitution([
+        FindPackageShare('evarobot_controller'),
+        'config',
+        'evarobot_controllers.yaml'
+    ])
+
+    # Load controllers after robot spawns
+    load_joint_state_broadcaster = RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=gazebo_server,
-            on_exit=[spawn_robot],
+            target_action=spawn_robot,
+            on_exit=[
+                Node(
+                    package='controller_manager',
+                    executable='spawner',
+                    arguments=[
+                        'joint_state_broadcaster',
+                        '--controller-manager', '/controller_manager',
+                        '--param-file', controller_config_file
+                    ],
+                    output='screen',
+                )
+            ],
+        )
+    )
+
+    load_diff_drive_controller = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=spawn_robot,
+            on_exit=[
+                Node(
+                    package='controller_manager',
+                    executable='spawner',
+                    arguments=[
+                        'evarobot_base_controller',
+                        '--controller-manager', '/controller_manager',
+                        '--param-file', controller_config_file
+                    ],
+                    output='screen',
+                )
+            ],
         )
     )
 
@@ -199,7 +256,7 @@ def generate_launch_description():
     # ========================================================================
 
     return LaunchDescription([
-        # Launch arguments
+        # Arguments
         world_arg,
         use_sim_time_arg,
         start_rviz_arg,
@@ -209,12 +266,17 @@ def generate_launch_description():
         yaw_arg,
         gui_arg,
 
-        # Nodes and processes
+        # Nodes
         robot_state_publisher_node,
-        gazebo_server,
-        gazebo_client,
+        gazebo_gui,
+        gazebo_headless,
         spawn_robot,
+        clock_bridge,
         rviz_node,
+
+        # Event handlers (load controllers after spawn)
+        load_joint_state_broadcaster,
+        load_diff_drive_controller,
     ])
 
 
@@ -226,7 +288,7 @@ def generate_launch_description():
 #    ros2 launch evarobot_description gazebo.launch.py
 #
 # 2. Launch with test world:
-#    ros2 launch evarobot_description gazebo.launch.py world:=test_world
+#    ros2 launch evarobot_description gazebo.launch.py world:=test_world.sdf
 #
 # 3. Launch with RViz:
 #    ros2 launch evarobot_description gazebo.launch.py start_rviz:=true
@@ -237,30 +299,19 @@ def generate_launch_description():
 # 5. Launch without GUI (headless):
 #    ros2 launch evarobot_description gazebo.launch.py gui:=false
 #
-# 6. Control the robot:
-#    # First, spawn the controllers:
-#    ros2 launch evarobot_controller controller.launch.py use_sim_time:=true
+# 6. Check if robot spawned:
+#    ros2 topic list | grep evarobot
 #
-#    # Then send velocity commands:
-#    ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
-#        "{linear: {x: 0.2}, angular: {z: 0.5}}" --once
+# 7. Check controllers:
+#    ros2 control list_controllers
 #
-# 7. Launch with joystick control:
-#    # Terminal 1: Launch Gazebo
-#    ros2 launch evarobot_description gazebo.launch.py world:=test_world
+# 8. Send test command:
+#    ros2 topic pub /evarobot_base_controller/cmd_vel_unstamped \
+#      geometry_msgs/msg/Twist "{linear: {x: 0.2}}" -r 10
 #
-#    # Terminal 2: Launch controllers
-#    ros2 launch evarobot_controller controller.launch.py use_sim_time:=true
-#
-#    # Terminal 3: Launch joystick
-#    ros2 launch evarobot_controller joystick_teleop.launch.py use_sim_time:=true
-#
-# 8. Check robot transforms:
+# 9. Check robot transforms:
 #    ros2 run tf2_tools view_frames
 #    evince frames.pdf
-#
-# 9. Check available topics:
-#    ros2 topic list
 #
 # 10. Monitor joint states:
 #    ros2 topic echo /joint_states

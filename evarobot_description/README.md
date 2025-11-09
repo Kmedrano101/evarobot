@@ -3,7 +3,7 @@
 > URDF robot model and Gazebo simulation environment for EvaRobot differential drive platform
 
 [![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blue?logo=ros&logoColor=white)](https://docs.ros.org/en/jazzy/)
-[![Gazebo](https://img.shields.io/badge/Gazebo-Classic-orange?logo=gazebo)](http://gazebosim.org/)
+[![Gazebo](https://img.shields.io/badge/Gazebo-Harmonic-orange?logo=gazebo)](https://gazebosim.org/)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green)](LICENSE)
 
 ---
@@ -131,7 +131,7 @@ Caster Wheel:
 #### `evarobot.ros2_control.xacro` - Control Interface
 
 **Hardware Interface:**
-- Plugin: `gazebo_ros2_control/GazeboSystem`
+- Plugin: `gz_ros2_control/GazeboSimSystem`
 - Joints: `left_wheel_joint`, `right_wheel_joint`
 - Command Interface: Velocity (±10.0 rad/s)
 - State Interfaces: Position, Velocity
@@ -143,10 +143,12 @@ Caster Wheel:
 ### System Dependencies
 
 ```bash
-# Gazebo Classic (for ROS2 Jazzy)
+# Gazebo Harmonic (for ROS2 Jazzy)
 sudo apt-get install -y \
-    ros-${ROS_DISTRO}-gazebo-ros-pkgs \
-    ros-${ROS_DISTRO}-gazebo-ros2-control
+    gz-harmonic \
+    ros-${ROS_DISTRO}-ros-gz-sim \
+    ros-${ROS_DISTRO}-ros-gz-bridge \
+    ros-${ROS_DISTRO}-gz-ros2-control
 ```
 
 ### ROS2 Packages
@@ -177,8 +179,8 @@ Ensure ROS2 Jazzy and Gazebo are installed:
 # Check ROS2 installation
 ros2 --version
 
-# Check Gazebo installation
-gazebo --version
+# Check Gazebo Harmonic installation
+gz sim --version
 ```
 
 ### 2. Build Package
@@ -415,12 +417,9 @@ Uncomment in `urdf/evarobot.gazebo.xacro`:
   <sensor name="imu_sensor" type="imu">
     <always_on>true</always_on>
     <update_rate>100</update_rate>
-    <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
-      <ros>
-        <namespace>/</namespace>
-        <remapping>~/out:=imu</remapping>
-      </ros>
-    </plugin>
+    <topic>imu</topic>
+    <gz_frame_id>base_link</gz_frame_id>
+    <enable_metrics>false</enable_metrics>
   </sensor>
 </gazebo>
 ```
@@ -525,25 +524,25 @@ ros2 run tf2_ros tf2_echo base_footprint base_link
 
 **Solutions:**
 
-1. **Check Gazebo installation:**
+1. **Check Gazebo Harmonic installation:**
 ```bash
-gazebo --version
-which gzserver
+gz sim --version
+which gz
 ```
 
 2. **Test Gazebo standalone:**
 ```bash
-gazebo
+gz sim
 ```
 
 3. **Check for conflicting processes:**
 ```bash
-killall gzserver gzclient
+killall gz ruby
 ```
 
-4. **Reset Gazebo models:**
+4. **Reset Gazebo cache:**
 ```bash
-rm -rf ~/.gazebo/models/*
+rm -rf ~/.gz/sim
 ```
 
 ### Issue: Robot Not Spawning
@@ -572,9 +571,9 @@ check_urdf /tmp/robot.urdf
 
 4. **Check spawn command:**
 ```bash
-ros2 run gazebo_ros spawn_entity.py \
+ros2 run ros_gz_sim create \
     -topic robot_description \
-    -entity evarobot
+    -name evarobot
 ```
 
 ### Issue: Robot Falls Through Ground
@@ -631,7 +630,7 @@ ros2 launch evarobot_description gazebo.launch.py z_pose:=0.2
 
 **Solutions:**
 
-1. **Check gazebo_ros2_control is loaded:**
+1. **Check gz_ros2_control is loaded:**
 ```bash
 ros2 node list | grep controller_manager
 # Should see: /controller_manager
@@ -712,7 +711,7 @@ odom (published by diff_drive_controller)
 
 ```
 ┌────────────────────────────────────────────────────┐
-│              Gazebo Physics Engine                  │
+│        Gazebo Harmonic Physics Engine               │
 │  ┌──────────────────────────────────────────────┐ │
 │  │  Robot Model (from URDF)                      │ │
 │  │   - Links with collision/inertia              │ │
@@ -721,9 +720,9 @@ odom (published by diff_drive_controller)
 └────────────────────────────────────────────────────┘
                       ↕
 ┌────────────────────────────────────────────────────┐
-│         gazebo_ros2_control Plugin                  │
+│           gz_ros2_control Plugin                    │
 │  ┌──────────────────────────────────────────────┐ │
-│  │  GazeboSystem Hardware Interface              │ │
+│  │  GazeboSimSystem Hardware Interface           │ │
 │  │   - Reads joint states from Gazebo            │ │
 │  │   - Writes joint commands to Gazebo           │ │
 │  └──────────────────────────────────────────────┘ │
@@ -861,7 +860,9 @@ This package is licensed under the BSD-3-Clause License. See the [LICENSE](../..
 ### Documentation
 - [URDF Tutorials](http://wiki.ros.org/urdf/Tutorials)
 - [Xacro Documentation](http://wiki.ros.org/xacro)
-- [Gazebo ROS2 Control](https://github.com/ros-simulation/gazebo_ros2_control)
+- [Gazebo Harmonic](https://gazebosim.org/docs/harmonic)
+- [gz_ros2_control](https://github.com/ros-controls/gz_ros2_control)
+- [ros_gz](https://github.com/gazebosim/ros_gz)
 - [Robot State Publisher](http://wiki.ros.org/robot_state_publisher)
 
 ### Tools
