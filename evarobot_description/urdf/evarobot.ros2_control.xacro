@@ -70,5 +70,6 @@
       </ros>
     </plugin>
     -->
+  </gazebo>
 
 </robot>
