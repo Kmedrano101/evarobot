@@ -1,0 +1,12 @@
+# udev rules for PS4 DualShock 4 Controller auto-pairing
+# Place this file in /etc/udev/rules.d/
+
+# PS4 Controller via Bluetooth
+# When a PS4 controller is detected, automatically trust and connect
+ACTION=="add", SUBSYSTEM=="input", ATTRS{name}=="Wireless Controller", RUN+="/home/kmedrano/evarobot_ws/src/evarobot_utils/scripts/bluetooth/bt_connect_ps4.sh"
+
+# PS4 Controller via USB (for initial pairing)
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="09cc", RUN+="/home/kmedrano/evarobot_ws/src/evarobot_utils/scripts/bluetooth/bt_pair_usb_ps4.sh"
+
+# Alternative PS4 controller product IDs
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="05c4", RUN+="/home/kmedrano/evarobot_ws/src/evarobot_utils/scripts/bluetooth/bt_pair_usb_ps4.sh"

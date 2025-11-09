@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![ROS2](https://img.shields.io/badge/ROS2-Humble-blue?logo=ros&logoColor=white)
+![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blue?logo=ros&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Linux-orange?logo=linux&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Build](https://img.shields.io/badge/Build-ament__cmake-blue)
@@ -46,17 +46,17 @@ This package provides a complete ROS2 integration for LDRobot's LiDAR sensors, e
 ### Prerequisites
 
 ```bash
-# ROS2 Humble (or compatible distribution)
+# ROS2 Jazzy (or compatible distribution)
 # Install ROS2 if not already installed
-# sudo apt install ros-humble-desktop
+# sudo apt install ros-jazzy-desktop
 
 # Install dependencies
 sudo apt update
 sudo apt install -y \
-    ros-humble-rclcpp \
-    ros-humble-sensor-msgs \
-    ros-humble-tf2-ros \
-    ros-humble-rviz2
+    ros-jazzy-rclcpp \
+    ros-jazzy-sensor-msgs \
+    ros-jazzy-tf2-ros \
+    ros-jazzy-rviz2
 ```
 
 ### Building the Package

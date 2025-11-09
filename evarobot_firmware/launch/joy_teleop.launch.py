@@ -71,15 +71,13 @@ def generate_launch_description():
         package='joy',
         executable='joy_node',
         name='joy_node',
+        namespace='evarobot_firmware',
         output='screen',
         parameters=[{
             'device_id': joy_device,
             'deadzone': 0.1,
             'autorepeat_rate': 20.0,  # 20 Hz
-        }],
-        remappings=[
-            ('joy', '/joy'),
-        ]
+        }]
     )
 
     # Node 2: Arduino Serial Bridge (Motor Control)
@@ -87,6 +85,7 @@ def generate_launch_description():
         package='evarobot_firmware',
         executable='arduino_serial_com.py',
         name='arduino_serial_bridge',
+        namespace='evarobot_firmware',
         output='screen',
         parameters=[{
             'serial_port': serial_port,
@@ -108,14 +107,15 @@ def generate_launch_description():
         package='evarobot_firmware',
         executable='joy_teleop_node.py',
         name='joy_teleop_node',
+        namespace='evarobot_firmware',
         output='screen',
         parameters=[{
             'linear_speed': linear_speed,
             'angular_speed': angular_speed,
             'speed_increment': 0.1,
             'joy_deadzone': 0.1,
-            'cmd_vel_topic': '/cmd_vel',
-            'joy_topic': '/joy',
+            'cmd_vel_topic': 'cmd_vel',
+            'joy_topic': 'joy',
         }]
     )
 

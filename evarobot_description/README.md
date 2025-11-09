@@ -2,7 +2,7 @@
 
 > URDF robot model and Gazebo simulation environment for EvaRobot differential drive platform
 
-[![ROS2](https://img.shields.io/badge/ROS2-Humble-blue?logo=ros&logoColor=white)](https://docs.ros.org/en/humble/)
+[![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blue?logo=ros&logoColor=white)](https://docs.ros.org/en/jazzy/)
 [![Gazebo](https://img.shields.io/badge/Gazebo-Classic-orange?logo=gazebo)](http://gazebosim.org/)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green)](LICENSE)
 
@@ -143,7 +143,7 @@ Caster Wheel:
 ### System Dependencies
 
 ```bash
-# Gazebo Classic (for ROS2 Humble)
+# Gazebo Classic (for ROS2 Jazzy)
 sudo apt-get install -y \
     ros-${ROS_DISTRO}-gazebo-ros-pkgs \
     ros-${ROS_DISTRO}-gazebo-ros2-control
@@ -171,7 +171,7 @@ sudo apt-get install -y \
 
 ### 1. Prerequisites
 
-Ensure ROS2 Humble and Gazebo are installed:
+Ensure ROS2 Jazzy and Gazebo are installed:
 
 ```bash
 # Check ROS2 installation

@@ -73,14 +73,14 @@ class ArduinoSerialBridge(Node):
         # Subscribers
         self.cmd_vel_sub = self.create_subscription(
             Twist,
-            '/cmd_vel',
+            'cmd_vel',
             self.cmd_vel_callback,
             qos_profile
         )
 
         self.mode_sub = self.create_subscription(
             String,
-            '/evarobot/control_mode',
+            'control_mode',
             self.mode_callback,
             qos_profile
         )
@@ -88,19 +88,19 @@ class ArduinoSerialBridge(Node):
         # Publishers
         self.encoder_ticks_pub = self.create_publisher(
             Int32MultiArray,
-            '/evarobot/encoder_ticks',
+            'encoder_ticks',
             qos_profile
         )
 
         self.encoder_velocities_pub = self.create_publisher(
             Float32MultiArray,
-            '/evarobot/encoder_velocities',
+            'encoder_velocities',
             qos_profile
         )
 
         self.status_pub = self.create_publisher(
             String,
-            '/evarobot/arduino_status',
+            'arduino_status',
             qos_profile
         )
 
@@ -131,27 +131,63 @@ class ArduinoSerialBridge(Node):
         self.get_logger().info(f'Wheel radius: {self.wheel_radius} m')
 
     def connect_serial(self):
-        """Establish serial connection to Arduino"""
-        try:
-            self.serial_conn = serial.Serial(
-                port=self.serial_port,
-                baudrate=self.baud_rate,
-                timeout=self.timeout
-            )
-            self.get_logger().info(f'Connected to Arduino on {self.serial_port}')
+        """Establish serial connection to Arduino with retry logic"""
+        import time
 
-            # Wait for Arduino to reset
-            import time
-            time.sleep(2.0)
+        max_retries = 3
+        retry_delay = 1.0  # seconds
 
-            # Read startup message
-            if self.serial_conn.in_waiting:
-                msg = self.serial_conn.readline().decode('utf-8', errors='ignore').strip()
-                self.get_logger().info(f'Arduino: {msg}')
+        for attempt in range(max_retries):
+            try:
+                self.get_logger().info(f'Connecting to Arduino on {self.serial_port} (attempt {attempt + 1}/{max_retries})...')
 
-        except serial.SerialException as e:
-            self.get_logger().error(f'Failed to connect to Arduino: {e}')
-            self.serial_conn = None
+                # Close any existing connection
+                if self.serial_conn and self.serial_conn.is_open:
+                    self.serial_conn.close()
+                    time.sleep(0.5)
+
+                # Open serial connection
+                self.serial_conn = serial.Serial(
+                    port=self.serial_port,
+                    baudrate=self.baud_rate,
+                    timeout=self.timeout
+                )
+
+                self.get_logger().info(f'Port opened, waiting for Arduino to reset...')
+
+                # Wait for Arduino to reset after serial connection
+                time.sleep(2.5)
+
+                # Flush any stale data
+                self.serial_conn.reset_input_buffer()
+                self.serial_conn.reset_output_buffer()
+
+                # Read startup message
+                if self.serial_conn.in_waiting:
+                    msg = self.serial_conn.readline().decode('utf-8', errors='ignore').strip()
+                    self.get_logger().info(f'Arduino: {msg}')
+
+                self.get_logger().info(f'Successfully connected to Arduino on {self.serial_port}')
+                return  # Success!
+
+            except serial.SerialException as e:
+                self.get_logger().warn(f'Connection attempt {attempt + 1} failed: {e}')
+                self.serial_conn = None
+
+                if attempt < max_retries - 1:
+                    self.get_logger().info(f'Retrying in {retry_delay} seconds...')
+                    time.sleep(retry_delay)
+                else:
+                    self.get_logger().error(f'Failed to connect to Arduino after {max_retries} attempts')
+                    self.get_logger().error('Please check:')
+                    self.get_logger().error(f'  1. Arduino is connected to {self.serial_port}')
+                    self.get_logger().error(f'  2. User has permission (member of dialout group)')
+                    self.get_logger().error(f'  3. No other program is using the port')
+            except Exception as e:
+                self.get_logger().error(f'Unexpected error: {e}')
+                self.serial_conn = None
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
 
     def send_command(self, cmd_dict):
         """Send JSON command to Arduino"""

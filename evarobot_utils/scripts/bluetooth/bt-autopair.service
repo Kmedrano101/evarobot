@@ -1,0 +1,15 @@
+[Unit]
+Description=Bluetooth Auto-Pair Service for PS4 Controller
+After=bluetooth.service
+Requires=bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 5
+ExecStart=/home/kmedrano/evarobot_ws/src/evarobot_utils/scripts/bluetooth/bt_autopair.sh AC:36:1B:92:0F:C3
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

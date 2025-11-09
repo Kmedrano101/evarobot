@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/ROS2-Humble-blue?logo=ros&logoColor=white" alt="ROS2 Humble">
-  <img src="https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 22.04">
+  <img src="https://img.shields.io/badge/ROS2-Jazzy-blue?logo=ros&logoColor=white" alt="ROS2 Jazzy">
+  <img src="https://img.shields.io/badge/Ubuntu-24.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 24.04">
   <img src="https://img.shields.io/badge/Raspberry%20Pi-A22846?logo=raspberrypi&logoColor=white" alt="Raspberry Pi">
   <img src="https://img.shields.io/badge/Gazebo-Garden-orange?logo=gazebo&logoColor=white" alt="Gazebo">
   <img src="https://img.shields.io/badge/C++-14-00599C?logo=cplusplus&logoColor=white" alt="C++">
@@ -43,8 +43,8 @@
 
 ## 📋 Prerequisites
 
-- 🐧 Ubuntu 22.04 (ROS2 Humble) or Ubuntu 24.04 (ROS2 Jazzy)
-- 🤖 ROS2 installed (Humble or Jazzy)
+- 🐧 Ubuntu 24.04 (ROS2 Jazzy)
+- 🤖 ROS2 Jazzy installed
 - 🎮 Gazebo Garden (for simulation)
 
 ### 📦 Install Dependencies

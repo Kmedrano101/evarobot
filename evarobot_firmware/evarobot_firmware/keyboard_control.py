@@ -94,8 +94,8 @@ class JoyControlNode(Node):
         self.declare_parameter('angular_speed', 1.0)  # rad/s
         self.declare_parameter('speed_increment', 0.1)
         self.declare_parameter('joy_deadzone', 0.1)
-        self.declare_parameter('cmd_vel_topic', '/cmd_vel')
-        self.declare_parameter('joy_topic', '/joy')
+        self.declare_parameter('cmd_vel_topic', 'cmd_vel')
+        self.declare_parameter('joy_topic', 'joy')
 
         # Get parameters
         self.linear_speed = self.get_parameter('linear_speed').value
