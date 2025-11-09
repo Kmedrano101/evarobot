@@ -15,11 +15,10 @@ License: BSD-3-Clause
 
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
-from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression, TextSubstitution
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, TextSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.parameter_descriptions import ParameterValue
@@ -204,52 +203,11 @@ def generate_launch_description():
     )
 
     # ========================================================================
-    # EVENT HANDLERS
+    # EVENT HANDLERS (Optional - Controllers loaded separately)
     # ========================================================================
 
-    # Controller configuration file path
-    controller_config_file = PathJoinSubstitution([
-        FindPackageShare('evarobot_controller'),
-        'config',
-        'evarobot_controllers.yaml'
-    ])
-
-    # Load controllers after robot spawns
-    load_joint_state_broadcaster = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=spawn_robot,
-            on_exit=[
-                Node(
-                    package='controller_manager',
-                    executable='spawner',
-                    arguments=[
-                        'joint_state_broadcaster',
-                        '--controller-manager', '/controller_manager',
-                        '--param-file', controller_config_file
-                    ],
-                    output='screen',
-                )
-            ],
-        )
-    )
-
-    load_diff_drive_controller = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=spawn_robot,
-            on_exit=[
-                Node(
-                    package='controller_manager',
-                    executable='spawner',
-                    arguments=[
-                        'evarobot_base_controller',
-                        '--controller-manager', '/controller_manager',
-                        '--param-file', controller_config_file
-                    ],
-                    output='screen',
-                )
-            ],
-        )
-    )
+    # Note: Controllers are loaded via separate launch file for better control
+    # Use: ros2 launch evarobot_controller controller.launch.py use_sim_time:=true
 
     # ========================================================================
     # LAUNCH DESCRIPTION
@@ -273,10 +231,6 @@ def generate_launch_description():
         spawn_robot,
         clock_bridge,
         rviz_node,
-
-        # Event handlers (load controllers after spawn)
-        load_joint_state_broadcaster,
-        load_diff_drive_controller,
     ])
 
 
@@ -299,8 +253,8 @@ def generate_launch_description():
 # 5. Launch without GUI (headless):
 #    ros2 launch evarobot_description gazebo.launch.py gui:=false
 #
-# 6. Check if robot spawned:
-#    ros2 topic list | grep evarobot
+# 6. Launch controllers (in separate terminal):
+#    ros2 launch evarobot_controller controller.launch.py use_sim_time:=true
 #
 # 7. Check controllers:
 #    ros2 control list_controllers

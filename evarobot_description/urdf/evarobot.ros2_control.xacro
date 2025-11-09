@@ -51,7 +51,7 @@
 
   <gazebo>
     <!-- Gazebo Harmonic ROS2 Control Plugin -->
-    <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <!-- ROS2 Control configuration file -->
       <parameters>$(find evarobot_controller)/config/evarobot_controllers.yaml</parameters>
       <!-- ROS namespace -->
