@@ -90,16 +90,26 @@ def generate_launch_description():
 
     # Differential Drive Controller
     # This controller handles the robot's base movement
-    # Subscribes to: /cmd_vel (or /evarobot_base_controller/cmd_vel)
-    # Publishes to: /odom, /tf, /evarobot_base_controller/cmd_vel_out
+    # Subscribes to: /cmd_vel (via relay node)
+    # Publishes to: /odom, /tf
     robot_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
         arguments=[
-            'evarobot_base_controller',
+            'evarobot_controller',
             '--controller-manager', '/controller_manager',
             '--controller-manager-timeout', controller_manager_timeout,
         ],
+        output='screen',
+    )
+
+    # Simple Controller: forwards /cmd_vel to /evarobot_controller/cmd_vel_unstamped
+    # This allows using the standard /cmd_vel topic for compatibility
+    simple_controller = Node(
+        package='evarobot_controller',
+        executable='simple_controller.py',
+        name='simple_controller',
+        parameters=[{'use_sim_time': use_sim_time}],
         output='screen',
     )
 
@@ -149,6 +159,9 @@ def generate_launch_description():
         # Controller spawners
         joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster,
+
+        # Simple controller for /cmd_vel relay
+        simple_controller,
 
         # Optional visualization
         rviz_node,

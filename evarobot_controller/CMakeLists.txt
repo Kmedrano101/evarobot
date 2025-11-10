@@ -7,6 +7,8 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
 
 # Optional dependencies for future hardware interface implementation
 # Uncomment when implementing the hardware interface
@@ -39,6 +41,16 @@ endif()
 # install(DIRECTORY include/
 #   DESTINATION include
 # )
+
+# Install Python package
+ament_python_install_package(${PROJECT_NAME})
+
+# Install Python executables
+install(PROGRAMS
+  ${PROJECT_NAME}/simple_controller.py
+  ${PROJECT_NAME}/joy_teleop_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 # Install launch and config files
 install(DIRECTORY

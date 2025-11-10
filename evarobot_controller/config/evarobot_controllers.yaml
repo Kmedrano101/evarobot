@@ -24,7 +24,7 @@ controller_manager:
 # DIFFERENTIAL DRIVE CONTROLLER
 # ============================================================================
 # Controls the robot's base movement using differential drive kinematics
-# Subscribes to: /cmd_vel (or /evarobot_base_controller/cmd_vel)
+# Subscribes to: /cmd_vel (standard ROS topic, remapped in launch file)
 # Publishes to: /odom, /tf (odom->base_footprint)
 #
 evarobot_controller:
@@ -33,6 +33,7 @@ evarobot_controller:
     type: diff_drive_controller/DiffDriveController
 
     # Use stamped velocity commands (TwistStamped vs Twist)
+    # Set to true - simple_controller.py converts Twist -> TwistStamped
     use_stamped_vel: true
 
     # ========================================================================
