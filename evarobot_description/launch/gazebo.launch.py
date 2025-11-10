@@ -259,9 +259,9 @@ def generate_launch_description():
 # 7. Check controllers:
 #    ros2 control list_controllers
 #
-# 8. Send test command:
-#    ros2 topic pub /evarobot_base_controller/cmd_vel_unstamped \
-#      geometry_msgs/msg/Twist "{linear: {x: 0.2}}" -r 10
+# 8. Send test command (after launching controllers):
+#    ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+#      "{linear: {x: 0.2}, angular: {z: 0.0}}" -r 10
 #
 # 9. Check robot transforms:
 #    ros2 run tf2_tools view_frames

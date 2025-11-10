@@ -63,17 +63,17 @@ ROS2 Jazzy uses **Gazebo Harmonic** (gz sim) instead of Gazebo Classic. This doc
 <exec_depend>gz_ros2_control</exec_depend>
 ```
 
-### 3. **Launch File (NEW)**
+### 3. **Launch File**
 
-**Location:** `evarobot_description/launch/gazebo_harmonic.launch.py`
+**Location:** `evarobot_description/launch/gazebo.launch.py`
 
-New launch file created specifically for Gazebo Harmonic.
+Updated for Gazebo Harmonic.
 
-**Key differences:**
+**Key features:**
 - Uses `ros_gz_sim` to launch Gazebo
 - Uses `gz sim` command instead of `gzserver`/`gzclient`
 - Includes ros_gz_bridge for clock synchronization
-- Auto-loads controllers using event handlers
+- Controllers are loaded separately using `controller.launch.py`
 
 ---
 
@@ -148,13 +148,17 @@ source install/setup.bash
 ```bash
 source ~/evarobot_ws/install/setup.bash
 
-ros2 launch evarobot_description gazebo_harmonic.launch.py
+# Terminal 1: Launch Gazebo
+ros2 launch evarobot_description gazebo.launch.py
+
+# Terminal 2: Launch Controllers
+ros2 launch evarobot_controller controller.launch.py use_sim_time:=true
 ```
 
 **Expected:**
 - Gazebo Harmonic GUI opens
 - EvaRobot spawns in simulation
-- Controllers automatically load
+- Controllers load in separate terminal
 
 **Verify:**
 
@@ -166,8 +170,9 @@ source ~/evarobot_ws/install/setup.bash
 ros2 topic list
 # Should see:
 # /clock
-# /evarobot_base_controller/cmd_vel_unstamped
-# /evarobot_base_controller/odom
+# /cmd_vel
+# /evarobot_controller/cmd_vel_unstamped
+# /evarobot_controller/odom
 # /joint_states
 # /robot_description
 # /tf
@@ -175,33 +180,33 @@ ros2 topic list
 # Check controllers
 ros2 control list_controllers
 # Should show:
-# evarobot_base_controller[diff_drive_controller/DiffDriveController] active
+# evarobot_controller[diff_drive_controller/DiffDriveController] active
 # joint_state_broadcaster[joint_state_broadcaster/JointStateBroadcaster] active
 ```
 
 ### Test 2: Send Velocity Command
 
 ```bash
-# Forward motion
-ros2 topic pub /evarobot_base_controller/cmd_vel_unstamped \
-  geometry_msgs/msg/Twist "{linear: {x: 0.3}}" -r 10
+# Forward motion (use standard /cmd_vel topic)
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.3}, angular: {z: 0.0}}" -r 10
 
 # Rotation
-ros2 topic pub /evarobot_base_controller/cmd_vel_unstamped \
-  geometry_msgs/msg/Twist "{angular: {z: 0.5}}" -r 10
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0}, angular: {z: 0.5}}" -r 10
 
 # Stop (Ctrl+C to stop publishing)
 ```
 
 **Expected:**
 - Robot moves in Gazebo
-- Odometry updates: `ros2 topic echo /evarobot_base_controller/odom`
+- Odometry updates: `ros2 topic echo /evarobot_controller/odom`
 
 ### Test 3: Keyboard Teleop
 
 ```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-  --ros-args -r /cmd_vel:=/evarobot_base_controller/cmd_vel_unstamped
+# Standard /cmd_vel topic - no remapping needed!
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
 **Controls:**
@@ -230,14 +235,14 @@ ros2 launch evarobot_controller joystick_teleop.launch.py use_sim_time:=true
 
 ```bash
 # Launch simulation with RViz
-ros2 launch evarobot_description gazebo_harmonic.launch.py start_rviz:=true
+ros2 launch evarobot_description gazebo.launch.py start_rviz:=true
 ```
 
 **In RViz:**
 1. Fixed Frame: `odom`
 2. Add → RobotModel
 3. Add → TF
-4. Add → Odometry (topic: `/evarobot_base_controller/odom`)
+4. Add → Odometry (topic: `/evarobot_controller/odom`)
 
 ---
 
@@ -258,7 +263,7 @@ sudo apt install gz-harmonic ros-jazzy-ros-gz-sim
 
 ### Issue: Controllers don't load
 
-**Error:** `Failed to load controller 'evarobot_base_controller'`
+**Error:** `Failed to load controller 'evarobot_controller'`
 
 **Check:**
 ```bash
@@ -269,7 +274,7 @@ ros2 pkg list | grep control
 ros2 topic echo /robot_description --once
 
 # Manually spawn controller
-ros2 run controller_manager spawner evarobot_base_controller
+ros2 run controller_manager spawner evarobot_controller
 ```
 
 ### Issue: Plugin not found
@@ -303,7 +308,7 @@ ros2 launch evarobot_description gazebo_harmonic.launch.py z_pose:=0.5
 ros2 control list_controllers
 
 # Check odom topic rate
-ros2 topic hz /evarobot_base_controller/odom
+ros2 topic hz /evarobot_controller/odom
 
 # Check for errors
 ros2 topic echo /diagnostics
@@ -341,9 +346,9 @@ To support both Gazebo Classic and Harmonic, you can:
 </plugin>
 ```
 
-2. **Use separate launch files:**
-   - `gazebo.launch.py` - Gazebo Classic
-   - `gazebo_harmonic.launch.py` - Gazebo Harmonic
+2. **Use separate launch files for different ROS versions:**
+   - ROS2 Humble/Iron: `gazebo.launch.py` for Gazebo Classic
+   - ROS2 Jazzy: `gazebo.launch.py` for Gazebo Harmonic (current)
 
 ---
 
