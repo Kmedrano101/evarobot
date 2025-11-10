@@ -45,20 +45,22 @@ This package uses the standard **DiffDriveController** from `ros2_controllers`, 
 - ✅ **Odometry Publishing**: Integrated wheel odometry with TF support
 - ✅ **Velocity Limiting**: Configurable linear and angular velocity/acceleration limits
 - ✅ **Hardware Abstraction**: Compatible with both simulation (Gazebo) and real hardware
+- ✅ **Simple Controller Relay**: Automatic Twist→TwistStamped conversion for /cmd_vel compatibility
 
-### 🎮 Joystick Control
+### 🎮 PS4 Joystick Control
 
-- ✅ **PS4/Xbox Controller Support**: Pre-configured button/axis mappings
-- ✅ **Deadman Switch**: Safety feature requiring button hold
-- ✅ **Configurable Controls**: Easily adjust axes, scales, and deadzone
-- ✅ **Multiple Input Sources**: Joystick, keyboard, navigation commands
+- ✅ **PS4 Controller Support**: Full PlayStation 4 controller integration
+- ✅ **No Deadman Button Required**: Direct, intuitive control
+- ✅ **Speed Adjustment**: D-pad controls for dynamic speed changes
+- ✅ **Low Latency**: Optimized for responsive robot control
+- ✅ **QoS Optimized**: Fixed RELIABLE QoS for simulation compatibility
 
-### 🔀 Command Multiplexing
+### 📡 Standard ROS Integration
 
-- ✅ **Priority-Based Selection**: Automatic switching between control sources
-- ✅ **Timeout Protection**: Stops robot if commands cease
-- ✅ **Emergency Stop**: Lock mechanism to disable all commands
-- ✅ **Flexible Architecture**: Easy to add new command sources
+- ✅ **Standard /cmd_vel Topic**: Direct compatibility with teleop tools
+- ✅ **Keyboard Teleop Ready**: Works with teleop_twist_keyboard out-of-box
+- ✅ **Nav2 Compatible**: Ready for autonomous navigation integration
+- ✅ **Message Type Conversion**: Seamless Twist/TwistStamped handling
 
 ---
 
@@ -66,15 +68,16 @@ This package uses the standard **DiffDriveController** from `ros2_controllers`, 
 
 ```
 evarobot_controller/
+├── evarobot_controller/             # Python package
+│   ├── __init__.py
+│   ├── simple_controller.py         # Twist->TwistStamped relay
+│   └── joy_teleop_node.py           # PS4 joystick control
 ├── config/
 │   ├── evarobot_controllers.yaml    # Main controller configuration
-│   └── twist_mux.yaml               # Command multiplexing config
+│   └── teleop_twist_joy.yaml        # Joystick configuration (reference)
 ├── launch/
 │   ├── controller.launch.py         # Controller spawning
-│   └── joystick_teleop.launch.py    # Joystick integration
-├── include/
-│   └── evarobot_controller/         # Header files (for future extensions)
-├── src/                             # Source files (for future extensions)
+│   └── joystick_teleop.launch.py    # PS4 joystick integration
 ├── CMakeLists.txt
 ├── package.xml
 └── README.md
@@ -84,17 +87,17 @@ evarobot_controller/
 
 #### `evarobot_controllers.yaml`
 - Controller manager configuration
-- DiffDriveController parameters
+- DiffDriveController parameters (evarobot_controller)
 - Joint state broadcaster setup
 - Robot physical parameters (wheel radius, separation)
 - Velocity/acceleration limits
+- TwistStamped message configuration (use_stamped_vel: true)
 - Comprehensive calibration guide
 
-#### `twist_mux.yaml`
-- Input source definitions
-- Priority levels
-- Timeout settings
-- Emergency stop configuration
+#### `teleop_twist_joy.yaml`
+- PS4 controller axis mappings
+- Speed configuration
+- Reference configuration (not actively used)
 
 ### 🚀 Launch Files
 
@@ -108,14 +111,13 @@ Spawns ROS2 controllers with proper initialization sequence.
 - `start_rviz` (default: false) - Launch RViz visualization
 
 #### `joystick_teleop.launch.py`
-Sets up complete joystick control pipeline.
+Sets up PS4 joystick control for direct robot control.
 
 **Arguments:**
 - `use_sim_time` (default: false) - Use simulation clock
 - `joy_config` - Path to joystick configuration
-- `twist_mux_config` - Path to twist mux configuration
-- `joy_vel_topic` (default: joy_vel) - Joystick output topic
-- `cmd_vel_topic` (default: cmd_vel) - Final command topic
+- `linear_speed` (default: 0.5) - Maximum linear speed (m/s)
+- `angular_speed` (default: 1.5) - Maximum angular speed (rad/s)
 
 ---
 
@@ -131,17 +133,14 @@ sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros2-control \
     ros-${ROS_DISTRO}-ros2-controllers \
     ros-${ROS_DISTRO}-joy \
-    ros-${ROS_DISTRO}-joy-teleop \
-    ros-${ROS_DISTRO}-twist-mux \
-    ros-${ROS_DISTRO}-teleop-twist-joy
+    ros-${ROS_DISTRO}-teleop-twist-keyboard
 ```
 
 ### Build Dependencies
 - `ament_cmake`
-- `rclcpp`
-- `hardware_interface`
-- `pluginlib`
-- `rclcpp_lifecycle`
+- `ament_cmake_python`
+- `rclpy`
+- `geometry_msgs`
 
 ---
 
@@ -178,13 +177,14 @@ source install/setup.bash
 The robot's physical dimensions are configured in `config/evarobot_controllers.yaml`:
 
 ```yaml
-evarobot_base_controller:
+evarobot_controller:
   ros__parameters:
     wheel_separation: 0.194  # Distance between wheels (meters)
     wheel_radius: 0.042      # Wheel radius (meters)
+    use_stamped_vel: true    # Use TwistStamped messages
 ```
 
-**⚠️ Important:** These values are calibrated for the actual EvaRobot. Adjust if your robot has different dimensions.
+**⚠️ Important:** These values must match the URDF model. The simple_controller node automatically converts standard Twist messages to TwistStamped for the controller.
 
 ### Velocity Limits
 
@@ -197,35 +197,37 @@ Current configuration:
 | Max Linear Acceleration | 0.8 m/s² | Smooth starts/stops |
 | Max Angular Acceleration | 3.0 rad/s² | Smooth rotation |
 
-### Joystick Configuration
+### PS4 Joystick Configuration
 
-Joystick settings are in `evarobot_firmware/config/joy_config.yaml`:
-
-**Default PS4 Controller Mapping:**
-- **R1 (Button 5)**: Deadman switch (hold to enable)
-- **Left Stick Vertical (Axis 1)**: Linear velocity (forward/backward)
-- **Right Stick Horizontal (Axis 0)**: Angular velocity (rotation)
+**Controller Mapping:**
+- **Left Stick Horizontal (Axis 0)**: Angular velocity (rotation left/right)
+- **Right Stick Vertical (Axis 4)**: Linear velocity (forward/backward)
+- **D-pad Up**: Increase speed dynamically
+- **D-pad Down**: Decrease speed dynamically
+- **NO Deadman Button Required**: Direct, responsive control
 
 **Key Parameters:**
 ```yaml
-deadzone: 0.05           # Joystick drift threshold
-autorepeat_rate: 20.0    # Update frequency (Hz)
-scale (linear): 0.5      # Max linear speed multiplier
-scale (angular): 1.5     # Max angular speed multiplier
+linear_speed: 0.5        # Max linear velocity (m/s)
+angular_speed: 1.5       # Max angular velocity (rad/s)
+joy_deadzone: 0.1        # Joystick drift threshold
+speed_increment: 0.1     # Speed adjustment step
 ```
 
-### Command Priority System
+### simple_controller Node
 
-Priority levels in twist_mux (higher = more important):
+The `simple_controller.py` node acts as a relay between standard ROS tools and the controller:
 
-| Priority | Source | Use Case |
-|----------|--------|----------|
-| 255 | Emergency Stop | Safety lock |
-| 100 | Joystick | Manual teleoperation |
-| 90 | Keyboard | Manual teleoperation |
-| 85 | Web Interface | Remote control |
-| 80 | Navigation | Autonomous navigation |
-| 50 | Safety Override | Emergency intervention |
+**Function:**
+- Subscribes to `/cmd_vel` (geometry_msgs/Twist)
+- Converts to TwistStamped with proper timestamps
+- Publishes to `/evarobot_controller/cmd_vel` (geometry_msgs/TwistStamped)
+- Uses RELIABLE QoS for simulation compatibility
+
+**Why:**
+- Enables use of standard teleop tools (keyboard, joystick)
+- Maintains compatibility with Nav2 and other ROS packages
+- Handles message type conversion transparently
 
 ---
 
@@ -241,7 +243,8 @@ ros2 launch evarobot_controller controller.launch.py
 
 This spawns:
 - `joint_state_broadcaster` - Publishes joint states
-- `evarobot_base_controller` - Controls robot base
+- `evarobot_controller` - Controls robot base
+- `simple_controller` - Relays /cmd_vel to controller
 
 #### Step 2: Verify Controllers
 
@@ -250,8 +253,11 @@ This spawns:
 ros2 control list_controllers
 
 # Expected output:
-# evarobot_base_controller[diff_drive_controller/DiffDriveController] active
+# evarobot_controller[diff_drive_controller/DiffDriveController] active
 # joint_state_broadcaster[joint_state_broadcaster/JointStateBroadcaster] active
+
+# Check simple_controller is running
+ros2 node list | grep simple_controller
 ```
 
 #### Step 3: Test Movement
@@ -267,12 +273,20 @@ ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
 #### Launch Complete Joystick System
 
 ```bash
-# Terminal 1: Controllers
-ros2 launch evarobot_controller controller.launch.py
+# Terminal 1: Gazebo (if using simulation)
+ros2 launch evarobot_description gazebo.launch.py
 
-# Terminal 2: Joystick
-ros2 launch evarobot_controller joystick_teleop.launch.py
+# Terminal 2: Controllers
+ros2 launch evarobot_controller controller.launch.py use_sim_time:=true
+
+# Terminal 3: PS4 Joystick
+ros2 launch evarobot_controller joystick_teleop.launch.py use_sim_time:=true
 ```
+
+**Controls:**
+- Move left stick horizontal: Rotate robot
+- Move right stick vertical: Drive forward/backward
+- Press D-pad up/down: Adjust speed
 
 #### Test Joystick Connection
 
@@ -285,6 +299,9 @@ jstest /dev/input/js0
 
 # Monitor joystick in ROS
 ros2 topic echo /joy
+
+# Monitor velocity commands
+ros2 topic echo /cmd_vel
 ```
 
 ### Simulation (Gazebo)
@@ -389,8 +406,8 @@ ros2 node list | grep controller_manager
 ros2 param list /controller_manager
 
 # Restart controllers
-ros2 control load_controller evarobot_base_controller
-ros2 control set_controller_state evarobot_base_controller start
+ros2 control load_controller evarobot_controller
+ros2 control set_controller_state evarobot_controller start
 ```
 
 ### Issue: Robot Doesn't Move
@@ -437,20 +454,21 @@ ros2 control set_controller_state evarobot_base_controller start
    # Move joystick - should see values changing
    ```
 
-3. **Check deadman button**
-   - Hold R1 (button 5) while moving sticks
-   - Verify in joy_config.yaml: `deadman_buttons: [5]`
-
-4. **Monitor joy_vel output**
+3. **Check node is running**
    ```bash
-   ros2 topic echo /joy_vel
-   # Should show messages only when deadman pressed
+   ros2 node list | grep joy_teleop_node
    ```
 
-5. **Check twist_mux**
+4. **Monitor /cmd_vel output**
    ```bash
-   ros2 topic echo /cmd_vel_mux/selected
-   # Should show "joystick" as active source
+   ros2 topic echo /cmd_vel
+   # Should show messages when moving joystick sticks
+   ```
+
+5. **Verify simple_controller relay**
+   ```bash
+   ros2 node info /simple_controller
+   # Check subscriptions and publications
    ```
 
 ### Issue: Robot Moves Erratically
@@ -461,11 +479,11 @@ ros2 control set_controller_state evarobot_base_controller start
    - Reduce max_velocity in `evarobot_controllers.yaml`
 
 2. **Joystick drift**
-   - Increase deadzone in `joy_config.yaml`
+   - Increase joy_deadzone in joy_teleop_node parameters
 
 3. **Multiple command sources**
-   - Check twist_mux active source
-   - Ensure only one source is publishing
+   - Ensure only one velocity source is publishing to /cmd_vel
+   - Stop other teleop nodes if running
 
 ### Issue: Odometry Drift
 
@@ -685,7 +703,13 @@ This package is licensed under the BSD-3-Clause License. See the [LICENSE](../..
 | Sensor Fusion | ⏳ Planned | IMU + wheel odometry |
 | Navigation Integration | ⏳ Planned | Nav2 compatibility |
 
-**Last Updated:** 2025-10-30
+**Last Updated:** 2025-11-10
+
+### Recent Changes
+- ✅ **simple_controller**: Added Twist→TwistStamped relay for /cmd_vel compatibility
+- ✅ **PS4 Joystick**: Direct control without deadman button, D-pad speed adjustment
+- ✅ **Simplified Architecture**: Removed twist_mux dependency for streamlined control
+- ✅ **Fixed QoS**: RELIABLE QoS for simulation compatibility
 
 ---
 

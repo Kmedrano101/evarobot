@@ -109,6 +109,7 @@ Driven Wheels:
   Width: 0.03m
   Mass: 0.1 kg each
   Separation: 0.194m
+  Position: -0.09m (30% of base_length backwards from center)
   Material: Dark Grey (Gazebo/DarkGrey)
   Friction: μ1=1.0, μ2=1.0
 
@@ -118,6 +119,10 @@ Caster Wheel:
   Position: 0.12m forward from base center
   Material: Light Grey (Gazebo/Grey)
   Friction: μ1=0.1, μ2=0.1
+
+Configuration:
+  Layout: Rear-drive differential (caster front, driven wheels back)
+  Wheelbase: 0.21m (distance between caster and driven wheels)
 ```
 
 #### `evarobot.gazebo.xacro` - Gazebo Configuration
@@ -314,12 +319,11 @@ ros2 launch evarobot_controller controller.launch.py use_sim_time:=true
 ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
     "{linear: {x: 0.2}, angular: {z: 0.0}}" --rate 10
 
-# Option B: Joystick control
+# Option B: PS4 Joystick control
 ros2 launch evarobot_controller joystick_teleop.launch.py use_sim_time:=true
 
 # Option C: Keyboard control
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args \
-    --remap cmd_vel:=key_vel
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
 ---
@@ -824,7 +828,12 @@ For real hardware, the URDF dimensions should match your physical robot:
 | Camera Sensor | ⏳ Planned | Future addition |
 | Custom Meshes | ⏳ Planned | 3D models for visual realism |
 
-**Last Updated:** 2025-10-30
+**Last Updated:** 2025-11-10
+
+### Recent Changes
+- ✅ **Wheel Repositioning**: Driven wheels moved 30% backwards for improved stability
+- ✅ **Standard /cmd_vel**: Direct compatibility with teleop tools
+- ✅ **PS4 Controller**: Integrated joystick control support
 
 ---
 
