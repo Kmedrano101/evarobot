@@ -3,12 +3,10 @@
 EvaRobot Joystick Teleoperation Launch File
 
 This launch file sets up joystick control for the EvaRobot:
-  1. Joy node - reads joystick input
-  2. Joy Teleop - converts joystick to velocity commands
-  3. Twist Mux - multiplexes multiple command sources
+  1. Joy node - reads joystick input from /dev/input/js*
+  2. Joy Teleop node - converts joystick to velocity commands on /cmd_vel
 
-The joystick commands are published to /joy_vel and then multiplexed
-with other command sources before being sent to the robot controller.
+Simple two-node setup for direct joystick control.
 
 Author: Kevin Medrano Ayala
 License: BSD-3-Clause
@@ -42,26 +40,16 @@ def generate_launch_description():
         description='Path to joystick configuration file'
     )
 
-    twist_mux_config_arg = DeclareLaunchArgument(
-        'twist_mux_config',
-        default_value=PathJoinSubstitution([
-            FindPackageShare('evarobot_controller'),
-            'config',
-            'twist_mux.yaml'
-        ]),
-        description='Path to twist mux configuration file'
+    linear_speed_arg = DeclareLaunchArgument(
+        'linear_speed',
+        default_value='0.5',
+        description='Maximum linear speed (m/s)'
     )
 
-    joy_vel_topic_arg = DeclareLaunchArgument(
-        'joy_vel_topic',
-        default_value='joy_vel',
-        description='Topic name for joystick velocity commands'
-    )
-
-    cmd_vel_topic_arg = DeclareLaunchArgument(
-        'cmd_vel_topic',
-        default_value='cmd_vel',
-        description='Topic name for final multiplexed velocity commands'
+    angular_speed_arg = DeclareLaunchArgument(
+        'angular_speed',
+        default_value='1.5',
+        description='Maximum angular speed (rad/s)'
     )
 
     # ========================================================================
@@ -70,9 +58,8 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     joy_config = LaunchConfiguration('joy_config')
-    twist_mux_config = LaunchConfiguration('twist_mux_config')
-    joy_vel_topic = LaunchConfiguration('joy_vel_topic')
-    cmd_vel_topic = LaunchConfiguration('cmd_vel_topic')
+    linear_speed = LaunchConfiguration('linear_speed')
+    angular_speed = LaunchConfiguration('angular_speed')
 
     # ========================================================================
     # NODES
@@ -92,37 +79,22 @@ def generate_launch_description():
     )
 
     # Joy Teleop Node
-    # Converts /joy messages to velocity commands (/joy_vel)
-    # This uses the joy_teleop configuration from joy_config.yaml
+    # Converts /joy messages to velocity commands on /cmd_vel
+    # Direct control - no multiplexing needed
     joy_teleop_node = Node(
-        package='joy_teleop',
-        executable='joy_teleop',
-        name='joy_teleop',
+        package='evarobot_controller',
+        executable='joy_teleop_node.py',
+        name='joy_teleop_node',
         parameters=[
-            joy_config,
-            {'use_sim_time': use_sim_time}
-        ],
-        # Remap the output to joy_vel (will be multiplexed by twist_mux)
-        remappings=[
-            ('input_joy/cmd_vel', joy_vel_topic),
-        ],
-        output='screen',
-    )
-
-    # Twist Mux Node
-    # Multiplexes velocity commands from multiple sources
-    # Subscribes to: /joy_vel, /key_vel, /nav_vel, etc.
-    # Publishes to: /cmd_vel (to the robot controller)
-    twist_mux_node = Node(
-        package='twist_mux',
-        executable='twist_mux',
-        name='twist_mux',
-        parameters=[
-            twist_mux_config,
-            {'use_sim_time': use_sim_time}
-        ],
-        remappings=[
-            ('cmd_vel_out', cmd_vel_topic),
+            {
+                'use_sim_time': use_sim_time,
+                'linear_speed': linear_speed,
+                'angular_speed': angular_speed,
+                'speed_increment': 0.1,
+                'joy_deadzone': 0.1,
+                'cmd_vel_topic': '/cmd_vel',
+                'joy_topic': '/joy',
+            }
         ],
         output='screen',
     )
@@ -135,14 +107,12 @@ def generate_launch_description():
         # Launch arguments
         use_sim_time_arg,
         joy_config_arg,
-        twist_mux_config_arg,
-        joy_vel_topic_arg,
-        cmd_vel_topic_arg,
+        linear_speed_arg,
+        angular_speed_arg,
 
         # Nodes
         joy_node,
         joy_teleop_node,
-        twist_mux_node,
     ])
 
 
@@ -150,43 +120,38 @@ def generate_launch_description():
 # USAGE EXAMPLES
 # ============================================================================
 #
-# 1. Launch with default configuration:
-#    ros2 launch evarobot_controller joystick_teleop.launch.py
+# 1. Launch with simulation:
+#    ros2 launch evarobot_controller joystick_teleop.launch.py use_sim_time:=true
 #
-# 2. Launch with custom joy config:
+# 2. Launch with custom speeds:
 #    ros2 launch evarobot_controller joystick_teleop.launch.py \
-#        joy_config:=/path/to/custom_joy_config.yaml
+#        linear_speed:=0.8 angular_speed:=2.0
 #
 # 3. Check joystick is detected:
 #    ros2 topic echo /joy
 #    (Move joystick and observe output)
 #
 # 4. Check velocity commands:
-#    ros2 topic echo /joy_vel
-#    (Hold deadman button and move joystick)
-#
-# 5. Check multiplexed output:
 #    ros2 topic echo /cmd_vel
+#    (Move joystick sticks)
 #
-# 6. Check active input source:
-#    ros2 topic echo /cmd_vel_mux/active
-#
-# 7. List available joystick devices:
+# 5. List available joystick devices:
 #    ls /dev/input/js*
 #
-# 8. Test joystick (without ROS):
+# 6. Test joystick (without ROS):
 #    jstest /dev/input/js0
 #
 # ============================================================================
-# JOYSTICK BUTTON MAPPING (PS4 Controller)
+# JOYSTICK CONTROL MAPPING (PS4 Controller)
 # ============================================================================
 #
-# Default configuration uses:
-#   - R1 (Button 5): Deadman switch (must hold to send commands)
-#   - Left Stick Vertical (Axis 1): Forward/backward linear velocity
-#   - Right Stick Horizontal (Axis 0): Left/right angular velocity
+# Controls (NO deadman button required):
+#   - Left Stick Horizontal (Axis 0): Rotate left/right (angular velocity)
+#   - Right Stick Vertical (Axis 4): Forward/backward (linear velocity)
+#   - D-pad Up: Increase speed
+#   - D-pad Down: Decrease speed
 #
-# To customize button mappings, edit:
+# To customize, edit parameters in launch file or:
 #   evarobot_firmware/config/joy_config.yaml
 #
 # ============================================================================
@@ -202,18 +167,18 @@ def generate_launch_description():
 #
 # Problem: Robot doesn't move
 # Solution:
-#   - Hold deadman button (R1)
+#   - Move the joystick sticks (no deadman button needed)
 #   - Check /joy topic for input: ros2 topic echo /joy
-#   - Check /joy_vel for output: ros2 topic echo /joy_vel
-#   - Check /cmd_vel for final output: ros2 topic echo /cmd_vel
+#   - Check /cmd_vel for output: ros2 topic echo /cmd_vel
 #   - Verify controller is loaded: ros2 control list_controllers
 #
 # Problem: Axes are inverted
 # Solution:
-#   - Adjust scale values in joy_config.yaml (use negative values)
+#   - Check PS4 controller is in correct mode
+#   - Axes should be: 0=left stick X, 4=right stick Y
 #
-# Problem: Low deadzone (drift)
+# Problem: QoS compatibility warnings
 # Solution:
-#   - Increase deadzone in joy_config.yaml (try 0.1-0.2)
+#   - Fixed: joy_teleop_node now uses RELIABLE QoS for /cmd_vel
 #
 # ============================================================================

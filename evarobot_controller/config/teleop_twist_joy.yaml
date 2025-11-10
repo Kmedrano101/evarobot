@@ -1,0 +1,89 @@
+# Teleop Twist Joy Configuration for EvaRobot
+# Configuration for teleop_twist_joy node to control robot with PS4 controller
+#
+# Author: Kevin Medrano Ayala
+# License: BSD-3-Clause
+
+teleop_twist_joy_node:
+  ros__parameters:
+    # Axis mappings (PS4 controller)
+    # Axes:
+    #   0 = Left stick horizontal
+    #   1 = Left stick vertical
+    #   2 = L2 trigger
+    #   3 = Right stick horizontal
+    #   4 = Right stick vertical
+    #   5 = R2 trigger
+
+    # Linear velocity axis (left stick vertical)
+    axis_linear:
+      x: 1  # Left stick vertical axis
+
+    # Scale for linear velocity (m/s)
+    scale_linear:
+      x: 0.5
+
+    # Invert linear axes if needed
+    scale_linear_turbo:
+      x: 1.0
+
+    # Angular velocity axis (right stick horizontal)
+    axis_angular:
+      yaw: 0  # Right stick horizontal axis
+
+    # Scale for angular velocity (rad/s)
+    scale_angular:
+      yaw: 1.5
+
+    # Invert angular axes if needed
+    scale_angular_turbo:
+      yaw: 2.5
+
+    # Enable button (must hold to send commands)
+    # PS4 Button 5 = R1 (right bumper)
+    enable_button: 5
+
+    # Turbo button (hold for higher speed)
+    # PS4 Button 4 = L1 (left bumper) - optional
+    enable_turbo_button: -1  # -1 to disable turbo
+
+    # Require enable button to be held
+    require_enable_button: true
+
+    # Publishing rate (Hz)
+    publish_stamped_twist: false
+
+    # Frame for stamped twist messages
+    frame_id: "base_link"
+
+    # Inverted axes (set to true if axis is inverted)
+    inverted_reverse: false
+
+# ============================================================================
+# PS4 CONTROLLER REFERENCE
+# ============================================================================
+#
+# Axes:
+#   0 = Left stick horizontal    (left = -1.0, right = +1.0)
+#   1 = Left stick vertical      (up = -1.0, down = +1.0)
+#   2 = L2 trigger               (released = 1.0, pressed = -1.0)
+#   3 = Right stick horizontal   (left = -1.0, right = +1.0)
+#   4 = Right stick vertical     (up = -1.0, down = +1.0)
+#   5 = R2 trigger               (released = 1.0, pressed = -1.0)
+#
+# Buttons:
+#   0 = X (Cross)
+#   1 = O (Circle)
+#   2 = Triangle
+#   3 = Square
+#   4 = L1
+#   5 = R1
+#   6 = L2 (digital)
+#   7 = R2 (digital)
+#   8 = Share
+#   9 = Options
+#   10 = PS button
+#   11 = L3 (left stick press)
+#   12 = R3 (right stick press)
+#
+# ============================================================================
