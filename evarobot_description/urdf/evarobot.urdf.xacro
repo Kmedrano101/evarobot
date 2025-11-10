@@ -30,6 +30,9 @@
   <xacro:property name="wheel_mass" value="0.1" />
   <xacro:property name="wheel_separation" value="0.194" />
 
+  <!-- Wheel position offset (30% of base_length backwards from center) -->
+  <xacro:property name="wheel_offset_x" value="${-0.3 * base_length}" />
+
   <!-- Caster wheel dimensions -->
   <xacro:property name="caster_radius" value="0.015" />
   <xacro:property name="caster_mass" value="0.05" />
@@ -142,7 +145,7 @@
     <joint name="${prefix}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child link="${prefix}_wheel_link"/>
-      <origin xyz="0 ${reflect * wheel_separation / 2.0} 0" rpy="0 0 0"/>
+      <origin xyz="${wheel_offset_x} ${reflect * wheel_separation / 2.0} 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
     </joint>
 
