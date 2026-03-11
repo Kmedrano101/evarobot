@@ -1,0 +1,107 @@
+# ExpressLRS CRSF Receiver Configuration for EvaRobot
+# Reads RC channels from an ELRS receiver via UART on Raspberry Pi 4B
+#
+# Author: Kevin Medrano Ayala
+# License: BSD-3-Clause
+
+rc_receiver_node:
+  ros__parameters:
+    # ========================================================================
+    # SERIAL PORT CONFIGURATION
+    # ========================================================================
+    # Raspberry Pi 4B UART on GPIO 14 (TX) / GPIO 15 (RX)
+    # Requires: dtoverlay=disable-bt in /boot/firmware/config.txt
+    # Requires: sudo systemctl disable serial-getty@ttyAMA0.service
+    serial_port: "/dev/ttyAMA0"
+    baud_rate: 420000           # ELRS CRSF default (confirmed via receiver web UI)
+
+    # ========================================================================
+    # CHANNEL MAPPING
+    # ========================================================================
+    # CRSF channels are 0-indexed (CH0 = first channel)
+    # Standard AETR mapping: CH0=Aileron, CH1=Elevator, CH2=Throttle, CH3=Rudder
+    #
+    # For differential drive robot:
+    #   - throttle_channel: forward/backward control (typically CH1 = right stick vertical)
+    #   - steering_channel: left/right turning (typically CH0 = right stick horizontal)
+    #   - arm_channel: safety switch (typically CH4 = AUX1, a 2-position switch)
+    throttle_channel: 1         # CH1 - Elevator (right stick vertical)
+    steering_channel: 3         # CH3 - Rudder (left stick horizontal)
+    arm_channel: 8              # CH8 - first arm switch (191=disarmed, 1792=armed)
+    arm_channel_2: 9            # CH9 - second arm switch (both must be ON to arm)
+    arm_threshold: 1500         # CRSF value above which system is armed
+
+    # ========================================================================
+    # INPUT TUNING
+    # ========================================================================
+    deadzone: 50                # Center deadzone in CRSF units (0-819 range)
+    invert_throttle: false      # Invert forward/backward direction
+    invert_steering: false      # Invert left/right direction
+
+    # ========================================================================
+    # VELOCITY LIMITS
+    # ========================================================================
+    max_linear_vel: 0.5         # m/s
+    max_angular_vel: 1.5        # rad/s
+
+    # ========================================================================
+    # TOPICS
+    # ========================================================================
+    cmd_vel_topic: "/cmd_vel"
+    raw_channels_topic: "rc/channels"
+    link_stats_topic: "rc/link_stats"
+
+    # ========================================================================
+    # SAFETY
+    # ========================================================================
+    failsafe_timeout: 0.5       # seconds without data before failsafe (zero velocity)
+
+# ============================================================================
+# CRSF CHANNEL VALUES REFERENCE
+# ============================================================================
+#
+# CRSF uses 11-bit resolution (0-2047):
+#   Min:    172  (stick fully down/left, or switch position 1)
+#   Center: 992  (stick centered)
+#   Max:   1811  (stick fully up/right, or switch position 2)
+#
+# ============================================================================
+# RASPBERRY PI 4B UART SETUP
+# ============================================================================
+#
+# 1. Disable Bluetooth to free ttyAMA0 for GPIO 14/15:
+#    Add to /boot/firmware/config.txt:
+#      dtoverlay=disable-bt
+#
+# 2. Disable serial console:
+#    sudo systemctl disable serial-getty@ttyAMA0.service
+#
+# 3. Reboot
+#
+# 4. Verify:
+#    ls -la /dev/ttyAMA0
+#
+# ============================================================================
+# WIRING (ELRS Receiver to Raspberry Pi 4B GPIO)
+# ============================================================================
+#
+#   ELRS RX pad   -->  Pi GPIO 15 (pin 10) RXD
+#   ELRS TX pad   <--  Pi GPIO 14 (pin 8)  TXD  (optional, for telemetry)
+#   ELRS GND      -->  Pi GND (pin 6)
+#   ELRS 5V/VCC   <--  Pi 5V (pin 2) or 3.3V (pin 1, check RX voltage!)
+#
+# ============================================================================
+# TRANSMITTER CHANNEL ASSIGNMENT
+# ============================================================================
+#
+# Configure your ELRS transmitter (e.g., RadioMaster) with AETR channel order:
+#   CH0 = Aileron   (right stick horizontal) --> steering
+#   CH1 = Elevator  (right stick vertical)   --> throttle
+#   CH2 = Throttle  (left stick vertical)    --> unused
+#   CH3 = Rudder    (left stick horizontal)  --> unused
+#   CH4 = AUX1      (2-pos switch, e.g. SA) --> arm switch
+#   CH5-CH15 = AUX2-AUX12 (additional switches)
+#
+# Note: Channel order depends on your TX firmware (OpenTX/EdgeTX).
+# Verify with: ros2 topic echo /rc/channels
+#
